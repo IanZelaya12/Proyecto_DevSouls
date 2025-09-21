@@ -3,7 +3,7 @@ import 'package.flutter/material.dart';
 class Sport {
   final String name;
   final String imagePath;
-  final  color;
+  final color;
 
   const Sport({
     required this.name,

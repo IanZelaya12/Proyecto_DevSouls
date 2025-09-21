@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "143220046093",
+    "project_id": "proyecto---devsouls",
+    "storage_bucket": "proyecto---devsouls.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:143220046093:android:35cd1a88f5b3b6f46f9844",
+        "android_client_info": {
+          "package_name": "com.example.proyecto_devsouls"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDVuSK7yduskFJ2pY5FSvEXla9Wt1D8JpQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
