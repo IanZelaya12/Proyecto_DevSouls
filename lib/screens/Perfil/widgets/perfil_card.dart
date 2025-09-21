@@ -1,16 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class PerfilCard extends StatelessWidget {
-  final String name;
-  final String email;
+  final Map<String, dynamic> userData;
   final VoidCallback onEditProfile;
   final VoidCallback onSignOut;
 
   const PerfilCard({
-    required this.name,
-    required this.email,
+    required this.userData,
     required this.onEditProfile,
     required this.onSignOut,
     super.key,
@@ -18,164 +15,154 @@ class PerfilCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final String name = userData['name'] ?? 'Usuario';
+    final String email = userData['email'] ?? 'No disponible';
+    final String? photoUrl = userData['photoUrl'];
+
+    // Datos organizados
+    final personal = userData['personalDetails'] ?? {};
+    final business = userData['businessAddress'] ?? {};
+    final bank = userData['bankDetails'] ?? {};
+
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-      color: const Color.fromARGB(0, 231, 102, 102), // Sin color de fondo aquí
+      color: Colors.transparent,
       child: Container(
         decoration: BoxDecoration(
-          border: Border.all(
-            color: Colors.white,
-          ), // Borde blanco alrededor del contenedor principal
-          borderRadius: BorderRadius.circular(15), // Redondeo de los bordes
+          border: Border.all(color: Colors.white, width: 2),
+          borderRadius: BorderRadius.circular(15),
         ),
-        child: Padding(
-          padding: const EdgeInsets.all(
-            16.0,
-          ), // Espaciado interno del contenido
+        padding: const EdgeInsets.all(16.0),
+        child: SingleChildScrollView(
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               CircleAvatar(
                 radius: 60,
-                backgroundImage: NetworkImage(
-                  FirebaseAuth.instance.currentUser?.photoURL ??
-                      'https://www.w3schools.com/w3images/avatar2.png',
-                ),
+                backgroundImage: photoUrl != null && photoUrl.isNotEmpty
+                    ? NetworkImage(photoUrl)
+                    : const AssetImage('assets/img/default_profile.png')
+                          as ImageProvider,
                 backgroundColor: Colors.white,
               ),
               const SizedBox(height: 20),
 
-              // Contenedor del nombre y disponible con borde blanco interno
+              // Nombre y correo
               Container(
                 padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white24,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: Colors.white,
-                    width: 2,
-                  ), // Borde blanco interno
-                ),
+                decoration: _boxDecoration(),
                 child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     Text(
                       name,
                       style: GoogleFonts.inter(
-                        fontSize: 40, // Nombre más grande
+                        fontSize: 28,
                         fontWeight: FontWeight.bold,
                         color: Colors.white,
                       ),
                     ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 8),
                     Text(
                       email,
                       style: GoogleFonts.inter(
-                        fontSize: 22, // Texto más grande para el correo
+                        fontSize: 18,
                         color: Colors.white70,
                       ),
-                    ),
-                    const SizedBox(height: 10),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: const [
-                        Icon(Icons.circle, color: Colors.green, size: 12),
-                        SizedBox(width: 8),
-                        Text(
-                          'Disponible',
-                          style: TextStyle(
-                            color: Colors.white70,
-                            fontSize: 20, // Texto "Disponible" más grande
-                          ),
-                        ),
-                      ],
                     ),
                   ],
                 ),
               ),
+
+              const SizedBox(height: 20),
+
+              // Datos personales
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: _boxDecoration(),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildSectionTitle('Detalles personales'),
+                    _buildDataRow('Correo', personal['email'] ?? ''),
+                    _buildDataRow('Contraseña', personal['password'] ?? ''),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 16),
+
+              // Dirección
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: _boxDecoration(),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildSectionTitle('Dirección de negocio'),
+                    _buildDataRow('Código Postal', business['pincode'] ?? ''),
+                    _buildDataRow('Dirección', business['address'] ?? ''),
+                    _buildDataRow('Ciudad', business['city'] ?? ''),
+                    _buildDataRow('Estado', business['state'] ?? ''),
+                    _buildDataRow('País', business['country'] ?? ''),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 16),
+
+              // Datos bancarios
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: _boxDecoration(),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildSectionTitle('Detalles bancarios'),
+                    _buildDataRow(
+                      'Número de cuenta',
+                      bank['accountNumber'] ?? '',
+                    ),
+                    _buildDataRow('Titular', bank['holderName'] ?? ''),
+                    _buildDataRow('Código IFSC', bank['ifscCode'] ?? ''),
+                  ],
+                ),
+              ),
+
               const SizedBox(height: 30),
 
-              // Mini contenedores para Teléfono y Usuario con bordes blancos
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.white24,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: Colors.white,
-                    width: 2,
-                  ), // Borde blanco
-                ),
-                child: _buildDataRow('Teléfono', '+34 612 345 678'),
-              ),
-              const SizedBox(height: 10),
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.white24,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: Colors.white,
-                    width: 2,
-                  ), // Borde blanco
-                ),
-                child: _buildDataRow('Usuario', '@$name'.toLowerCase()),
-              ),
-              const SizedBox(height: 30),
-              // Botones: Primero Editar perfil, luego Cerrar sesión con bordes blancos y más grandes
+              // Botones
               Column(
                 children: [
                   ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
-                      minimumSize: const Size(
-                        200,
-                        50,
-                      ), // Aumento el tamaño de los botones
+                      minimumSize: const Size(200, 50),
                       backgroundColor: const Color.fromARGB(255, 15, 172, 106),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
-                        side: const BorderSide(
-                          color: Colors.white,
-                          width: 2,
-                        ), // Borde blanco
+                        side: const BorderSide(color: Colors.white, width: 2),
                       ),
                     ),
                     icon: const Icon(Icons.edit, color: Colors.white),
                     label: const Text(
                       'Editar perfil',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                      ), // Letra más grande
+                      style: TextStyle(color: Colors.white, fontSize: 18),
                     ),
                     onPressed: onEditProfile,
                   ),
                   const SizedBox(height: 10),
                   ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
-                      minimumSize: const Size(
-                        200,
-                        50,
-                      ), // Aumento el tamaño de los botones
+                      minimumSize: const Size(200, 50),
                       backgroundColor: Colors.black,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
-                        side: const BorderSide(
-                          color: Colors.white,
-                          width: 2,
-                        ), // Borde blanco
+                        side: const BorderSide(color: Colors.white, width: 2),
                       ),
                     ),
                     icon: const Icon(Icons.exit_to_app, color: Colors.white),
                     label: const Text(
                       'Cerrar sesión',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                      ), // Letra más grande
+                      style: TextStyle(color: Colors.white, fontSize: 18),
                     ),
                     onPressed: onSignOut,
                   ),
@@ -188,24 +175,48 @@ class PerfilCard extends StatelessWidget {
     );
   }
 
+  /// 🔹 Estilo de contenedor
+  BoxDecoration _boxDecoration() {
+    return BoxDecoration(
+      color: Colors.white24,
+      borderRadius: BorderRadius.circular(12),
+      border: Border.all(color: Colors.white, width: 2),
+    );
+  }
+
+  /// 🔹 Título de sección
+  Widget _buildSectionTitle(String title) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8.0),
+      child: Text(
+        title,
+        style: GoogleFonts.inter(
+          fontSize: 20,
+          fontWeight: FontWeight.bold,
+          color: Colors.white,
+        ),
+      ),
+    );
+  }
+
+  /// 🔹 Fila de datos
   Widget _buildDataRow(String title, String value) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      padding: const EdgeInsets.symmetric(vertical: 4.0),
       child: Row(
         children: [
           Text(
-            '$title:',
+            '$title: ',
             style: GoogleFonts.inter(
-              fontSize: 18,
+              fontSize: 16,
               fontWeight: FontWeight.w500,
               color: Colors.white70,
             ),
           ),
-          const SizedBox(width: 8),
           Expanded(
             child: Text(
               value,
-              style: GoogleFonts.inter(fontSize: 18, color: Colors.white),
+              style: GoogleFonts.inter(fontSize: 16, color: Colors.white),
               overflow: TextOverflow.ellipsis,
             ),
           ),

@@ -1,7 +1,5 @@
-// lib/screens/reservas/reservas_screen.dart
 import 'package:flutter/material.dart';
-import 'widgets/styles.dart'; // Importar los estilos
-import 'widgets/reserva_card.dart'; // Importar la tarjeta de reserva
+import 'widgets/reserva_card.dart';
 
 class Reserva {
   final String nombre;
@@ -20,20 +18,45 @@ class ReservasScreen extends StatefulWidget {
 
 class _ReservasScreenState extends State<ReservasScreen> {
   TextEditingController searchController = TextEditingController();
+  List<Reserva> filteredReservas = reservas; // Inicialmente todas
+
+  @override
+  void initState() {
+    super.initState();
+    searchController.addListener(_filterReservas);
+  }
+
+  void _filterReservas() {
+    final query = searchController.text.toLowerCase();
+    setState(() {
+      filteredReservas = reservas.where((reserva) {
+        return reserva.nombre.toLowerCase().contains(query) ||
+            reserva.fecha.toLowerCase().contains(query);
+      }).toList();
+    });
+  }
+
+  @override
+  void dispose() {
+    searchController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
+    final screenHeight = MediaQuery.of(context).size.height;
+
     return Scaffold(
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Column(
             children: [
-              // Campo de búsqueda de reservas
+              // Campo de búsqueda
               TextField(
                 controller: searchController,
                 decoration: InputDecoration(
-                  hintText: 'Búsqueda de reservas...',
+                  hintText: 'Buscar reservas...',
                   prefixIcon: const Icon(Icons.search),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -44,21 +67,35 @@ class _ReservasScreenState extends State<ReservasScreen> {
                 ),
               ),
               const SizedBox(height: 20),
-              const Text(
-                'Reservas Disponibles',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+
+              // Título
+              const Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'Reservas Disponibles',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
               ),
               const SizedBox(height: 10),
-              // Lista de reservas
+
+              // Lista filtrada
               Expanded(
-                child: ListView.builder(
-                  itemCount: reservas.length, // Cantidad de reservas
-                  itemBuilder: (context, index) {
-                    return ReservaCard(
-                      reserva: reservas[index],
-                    ); // Pasamos cada instancia de reserva
-                  },
-                ),
+                child: filteredReservas.isEmpty
+                    ? Center(
+                        child: Text(
+                          "No se encontraron reservas",
+                          style: TextStyle(
+                            fontSize: screenHeight * 0.02,
+                            color: Colors.grey,
+                          ),
+                        ),
+                      )
+                    : ListView.builder(
+                        itemCount: filteredReservas.length,
+                        itemBuilder: (context, index) {
+                          return ReservaCard(reserva: filteredReservas[index]);
+                        },
+                      ),
               ),
             ],
           ),
@@ -68,18 +105,22 @@ class _ReservasScreenState extends State<ReservasScreen> {
   }
 }
 
-// Datos de ejemplo de las reservas
+// Datos de ejemplo
 List<Reserva> reservas = [
   Reserva(
     'Cancha de Fútbol',
     'Martes - 17/08 a las 09:30',
-    'assets/soccer_field.png',
+    'assets/img/futbol.png',
   ),
   Reserva(
     'Piscina para Natación',
     'Sábado - 19/09 a las 09:30',
-    'assets/swimming_pool.png',
+    'assets/img/natacion.png',
   ),
-  Reserva('Gimnasia', 'Domingo - 21/03 a las 09:30', 'assets/gymnastics.png'),
-  Reserva('Ring de Judo', 'Lunes - 21/08 a las 12:30', 'assets/judo.png'),
+  Reserva('Gimnasia', 'Domingo - 21/03 a las 09:30', 'assets/img/gimnasia.png'),
+  Reserva(
+    'Ring de Judo',
+    'Lunes - 21/08 a las 12:30',
+    'assets/img/artes_marciales.png',
+  ),
 ];

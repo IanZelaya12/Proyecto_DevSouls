@@ -1,57 +1,86 @@
-// lib/screens/reservas/widgets/reserva_card.dart
 import 'package:flutter/material.dart';
 import '../reservas.dart';
-import 'styles.dart'; // Importar estilos
 
 class ReservaCard extends StatelessWidget {
-  final Reserva
-  reserva; // Aquí declaramos correctamente el parámetro de tipo Reserva
+  final Reserva reserva;
 
-  // Constructor correcto
   const ReservaCard({super.key, required this.reserva});
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final fontSize = screenWidth * 0.045; // Tamaño adaptativo de fuente
+
     return Card(
-      margin: const EdgeInsets.symmetric(vertical: 10),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+      margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       elevation: 5,
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(15),
+        borderRadius: BorderRadius.circular(16),
         child: Container(
-          height: 150,
-          color: Colors.green.shade300,
-          child: Row(
+          height: 160,
+          decoration: BoxDecoration(color: Colors.grey[300]),
+          child: Stack(
             children: [
-              Image.asset(
-                reserva.imagen,
-                width: 120,
-                fit: BoxFit.cover,
-              ), // Usamos reserva.imagen aquí
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        reserva
-                            .nombre, // Aquí accedemos al nombre de la reserva
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
+              // Imagen de fondo
+              Positioned.fill(
+                child: Image.asset(
+                  reserva.imagen,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(
+                      color: Colors.grey[400],
+                      child: Icon(
+                        Icons.sports,
+                        size: screenWidth * 0.15,
+                        color: Colors.white.withOpacity(0.6),
                       ),
-                      const SizedBox(height: 5),
-                      Text(
-                        reserva.fecha, // Y aquí a la fecha
-                        style: const TextStyle(
-                          fontSize: 14,
-                          color: Colors.white70,
-                        ),
-                      ),
-                    ],
+                    );
+                  },
+                ),
+              ),
+
+              // Degradado oscuro para legibilidad
+              Positioned.fill(
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        Colors.black.withOpacity(0.6),
+                        Colors.black.withOpacity(0.2),
+                      ],
+                      begin: Alignment.bottomCenter,
+                      end: Alignment.topCenter,
+                    ),
                   ),
+                ),
+              ),
+
+              // Contenido textual
+              Positioned(
+                left: 16,
+                bottom: 16,
+                right: 16,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      reserva.nombre,
+                      style: TextStyle(
+                        fontSize: fontSize,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      reserva.fecha,
+                      style: TextStyle(
+                        fontSize: fontSize * 0.8,
+                        color: Colors.white70,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
