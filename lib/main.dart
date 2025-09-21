@@ -3,6 +3,7 @@ import 'package:firebase_core/firebase_core.dart'; // Asegúrate de importar Fir
 import 'screens/login/login.dart'; // Pantalla de login
 import 'screens/register/register.dart'; // Pantalla de registro
 import 'screens/home/home.dart'; // Pantalla de home
+import 'screens/intro/pantalla_principal/intro_screen.dart'; // Pantalla de introducción (nuevo)
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -18,12 +19,14 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Proyecto DevSouls',
       theme: ThemeData(
-        primarySwatch: Colors.green,
-      ), // Usamos un tema más relacionado con el color verde
-      initialRoute: 'init', // Ruta inicial
+        primarySwatch:
+            Colors.green, // Usamos un tema más relacionado con el color verde
+      ),
+      initialRoute: 'intro', // Cambiar la ruta inicial a 'intro'
       routes: {
-        'init': (context) =>
-            const LoginScreen(), // Pantalla de login actualizada
+        'intro': (context) =>
+            const IntroScreen(), // Ruta para las pantallas de introducción
+        'init': (context) => const LoginScreen(), // Ruta para el login
         'register': (context) =>
             const RegisterScreen(), // Ruta para el registro
         'home': (context) =>
