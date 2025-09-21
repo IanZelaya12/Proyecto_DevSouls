@@ -73,13 +73,13 @@ List<Reserva> reservas = [
   Reserva(
     'Cancha de Fútbol',
     'Martes - 17/08 a las 09:30',
-    'assets/soccer_field.png',
+    'assets/img/soccer_field.png',
   ),
   Reserva(
     'Piscina para Natación',
     'Sábado - 19/09 a las 09:30',
-    'assets/swimming_pool.png',
+    'assets/img/swimming_pool.png',
   ),
-  Reserva('Gimnasia', 'Domingo - 21/03 a las 09:30', 'assets/gymnastics.png'),
-  Reserva('Ring de Judo', 'Lunes - 21/08 a las 12:30', 'assets/judo.png'),
+  Reserva('Gimnasia', 'Domingo - 21/03 a las 09:30', 'assets/img/gymnastics.png'),
+  Reserva('Ring de Judo', 'Lunes - 21/08 a las 12:30', 'assets/img/judo.png'),
 ];
