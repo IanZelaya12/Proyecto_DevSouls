@@ -24,10 +24,6 @@ class _ReservasScreenState extends State<ReservasScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Reservas'),
-        backgroundColor: AppColors.primaryColor,
-      ),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(16.0),

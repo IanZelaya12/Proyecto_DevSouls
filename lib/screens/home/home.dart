@@ -7,6 +7,7 @@ import 'widgets/recent_court_list_item.dart'; // Importar los widgets
 import '../../data/dummy_data.dart'; // Importar datos de ejemplo (o tu modelo de datos)
 import '../sport_filters/sports_filter_screen.dart'; // Importar SportsFilterScreen
 import '../Reservas/reservas.dart';
+import '../Perfil/perfil.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -54,7 +55,6 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Home'), backgroundColor: Colors.green),
       body: SafeArea(
         child: PageView(
           controller: _pageController,
@@ -71,6 +71,7 @@ class _HomeScreenState extends State<HomeScreen> {
             // Página de Reservas
             const ReservasScreen(), // Agregar la pantalla de reservas aquí
             // Puedes agregar más pantallas como Perfil si lo deseas
+            const PerfilScreen(), //Perfil
           ],
         ),
       ),
@@ -206,8 +207,8 @@ class _HomeScreenState extends State<HomeScreen> {
     return BottomNavigationBar(
       currentIndex: _selectedIndex, // Indicar el ítem seleccionado
       backgroundColor: Colors.green, // Color de fondo del menú inferior
-      selectedItemColor: Colors.white, // Color del ítem seleccionado
-      unselectedItemColor: Colors.black, // Color de los ítems no seleccionados
+      selectedItemColor: Colors.green, // Color del ítem seleccionado
+      unselectedItemColor: Colors.grey, // Color de los ítems no seleccionados
       items: const <BottomNavigationBarItem>[
         BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
         BottomNavigationBarItem(

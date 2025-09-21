@@ -50,4 +50,9 @@ flutter {
 
 dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
+    dependencies {
+    implementation("com.google.firebase:firebase-storage:20.0.0")  // Firebase Storage
+    implementation("com.github.bumptech.glide:glide:4.13.0")  // Glide
+}
+
 }
