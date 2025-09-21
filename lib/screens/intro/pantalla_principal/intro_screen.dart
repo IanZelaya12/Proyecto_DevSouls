@@ -11,30 +11,30 @@ class IntroScreen extends StatefulWidget {
 }
 
 class _IntroScreenState extends State<IntroScreen> {
-  // Controlador para manejar la navegación por las páginas
   final PageController _pageController = PageController();
-  int _currentPage = 0; // Índice de la página actual
+  int _currentPage = 0;
 
-  // Lista de títulos y descripciones
   final List<Map<String, String>> _pages = [
     {
       'title': 'Selecciona tu Cancha y Horario',
       'subtitle':
           'Selecciona una cancha y un horario disponibles en el calendario.',
+      'image': 'assets/img/basketball_intro.png', // Ruta de la imagen
     },
     {
       'title': 'Pantalla de Pago',
       'subtitle':
           'Confirma el resumen de tu reserva y completa el pago de forma segura.',
+      'image': 'assets/img/voleibol_intro.png', // Ruta de la imagen
     },
     {
       'title': 'Pantalla de Confirmación',
       'subtitle':
           'Tu reserva está lista! Recibirás los detalles y un código QR para entrar a la cancha.',
+      'image': 'assets/img/futbol_intro.png', // Ruta de la imagen
     },
   ];
 
-  // Cambiar de página
   void _nextPage() {
     if (_currentPage < _pages.length - 1) {
       _pageController.nextPage(
@@ -42,12 +42,10 @@ class _IntroScreenState extends State<IntroScreen> {
         curve: Curves.ease,
       );
     } else {
-      // Cuando llega a la última página, redirige al login
       Navigator.pushReplacementNamed(context, 'init');
     }
   }
 
-  // Cambiar de página al hacer swipe
   void _onPageChanged(int index) {
     setState(() {
       _currentPage = index;
@@ -60,7 +58,6 @@ class _IntroScreenState extends State<IntroScreen> {
       body: SafeArea(
         child: Stack(
           children: [
-            // PageView con las pantallas de introducción
             PageView.builder(
               controller: _pageController,
               onPageChanged: _onPageChanged,
@@ -69,12 +66,9 @@ class _IntroScreenState extends State<IntroScreen> {
                 return _buildPage(index);
               },
             ),
-            // Puntos de navegación abajo
             Positioned(
               bottom: 30,
-              left:
-                  MediaQuery.of(context).size.width / 2 -
-                  40, // Centrado horizontalmente
+              left: MediaQuery.of(context).size.width / 2 - 40,
               child: Row(
                 children: List.generate(
                   _pages.length,
@@ -90,16 +84,12 @@ class _IntroScreenState extends State<IntroScreen> {
                 ),
               ),
             ),
-            // Botón Skip en la esquina superior derecha
             Positioned(
               top: 20,
               right: 20,
               child: TextButton(
                 onPressed: () {
-                  Navigator.pushReplacementNamed(
-                    context,
-                    'init',
-                  ); // Redirigir al login
+                  Navigator.pushReplacementNamed(context, 'init');
                 },
                 child: const Text(
                   'Skip',
@@ -107,14 +97,13 @@ class _IntroScreenState extends State<IntroScreen> {
                 ),
               ),
             ),
-            // Botón Next en la esquina inferior derecha
             Positioned(
               bottom: 20,
               right: 20,
               child: ElevatedButton(
                 onPressed: _nextPage,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green, // Color del botón
+                  backgroundColor: Colors.green,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -131,26 +120,21 @@ class _IntroScreenState extends State<IntroScreen> {
     );
   }
 
-  // Método para construir cada página
   Widget _buildPage(int index) {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        // Icono o ilustración de la página
-        Icon(
-          Icons
-              .sports_soccer, // Esto es solo un ejemplo, puedes cambiarlo según la página
-          size: 120,
-          color: Colors.green,
+        Image.asset(
+          _pages[index]['image']!, // Usamos la imagen de la lista
+          width: 200, // Ajusta el tamaño si es necesario
+          height: 200,
         ),
         const SizedBox(height: 20),
-        // Título de la página
         Text(
           _pages[index]['title']!,
           style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 10),
-        // Subtítulo de la página
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 40.0),
           child: Text(

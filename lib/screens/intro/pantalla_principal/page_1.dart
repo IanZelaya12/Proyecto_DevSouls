@@ -1,4 +1,4 @@
-// lib/screens/onboarding/page_one.dart
+// lib/screens/intro/page_one.dart
 import 'package:flutter/material.dart';
 
 class PageOne extends StatelessWidget {
@@ -11,7 +11,11 @@ class PageOne extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.sports_soccer, size: 100, color: Colors.blue),
+          Image.asset(
+            'assets/img/basketball_intro.png', // Ruta de la imagen
+            width: 500, // Ajusta el tamaño de la imagen
+            height: 500,
+          ),
           const SizedBox(height: 20),
           const Text(
             'Selecciona tu Cancha y Horario',

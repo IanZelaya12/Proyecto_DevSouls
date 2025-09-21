@@ -11,7 +11,11 @@ class PageThree extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.check_circle, size: 100, color: Colors.blue),
+          Image.asset(
+            'assets/img/futbol_intro.png', // Ruta de la imagen
+            width: 500, // Ajusta el tamaño de la imagen
+            height: 500,
+          ),
           const SizedBox(height: 20),
           const Text(
             'Pantalla de Confirmación',

@@ -11,7 +11,11 @@ class PageTwo extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.payment, size: 100, color: Colors.green),
+          Image.asset(
+            'assets/img/voleibol_intro.png', // Ruta de la imagen
+            width: 500, // Ajusta el tamaño de la imagen
+            height: 500,
+          ),
           const SizedBox(height: 20),
           const Text(
             'Pantalla de Pago',
