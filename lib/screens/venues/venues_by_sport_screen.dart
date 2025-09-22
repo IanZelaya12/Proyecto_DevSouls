@@ -46,7 +46,7 @@ class _VenuesBySportScreenState extends State<VenuesBySportScreen> {
         distance: '2.5 km',
         rating: 4.5,
         priceRange: 'L. 150-300',
-        imageUrl: 'assets/img/venue1.png',
+        imageUrl: 'assets/img/fut1.jpg',
       ),
       VenueData(
         name: 'Complejo Deportivo El Salvador',
@@ -54,7 +54,7 @@ class _VenuesBySportScreenState extends State<VenuesBySportScreen> {
         distance: '4.2 km',
         rating: 4.2,
         priceRange: 'L. 200-400',
-        imageUrl: 'assets/img/venue2.png',
+        imageUrl: 'assets/img/fut2.jpg',
       ),
       VenueData(
         name: 'Polideportivo San Rafael',
@@ -62,7 +62,7 @@ class _VenuesBySportScreenState extends State<VenuesBySportScreen> {
         distance: '6.1 km',
         rating: 4.0,
         priceRange: 'L. 100-250',
-        imageUrl: 'assets/img/venue3.png',
+        imageUrl: 'assets/img/fut1.jpg',
       ),
     ];
   }
