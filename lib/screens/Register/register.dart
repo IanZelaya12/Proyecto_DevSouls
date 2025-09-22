@@ -1,7 +1,8 @@
 // lib/screens/register/register.dart
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart'; // Importar Firebase Auth
-import 'widgets/styles.dart'; // Importar los estilos
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart'; // Firestore
+import 'widgets/styles.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -16,56 +17,75 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _nameController = TextEditingController();
 
   bool _isPasswordVisible = false;
+  bool _loading = false;
 
-  // Función de registro
-  void _register() async {
+  Future<void> _register() async {
+    if (_loading) return;
+    setState(() => _loading = true);
+
     try {
-      // Intenta registrar al usuario con Firebase usando el correo y la contraseña
-      UserCredential userCredential = await FirebaseAuth.instance
-          .createUserWithEmailAndPassword(
-            email: _emailController.text, // Correo ingresado
-            password: _passwordController.text, // Contraseña ingresada
-          );
+      final email = _emailController.text.trim();
+      final pass = _passwordController.text.trim();
+      final name = _nameController.text.trim();
 
-      // Si el registro es exitoso, muestra un mensaje y navega a la pantalla principal
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Registrando...')));
-
-      // Asignar el nombre de usuario al usuario recién registrado
-      await userCredential.user?.updateDisplayName(_nameController.text);
-
-      // Navegar a la pantalla de Home después del registro exitoso
-      Navigator.pushReplacementNamed(
-        context,
-        'home', // Cambiar 'main-app' a 'home'
+      // 1) Crear cuenta en Auth
+      final cred = await FirebaseAuth.instance.createUserWithEmailAndPassword(
+        email: email,
+        password: pass,
       );
+
+      // 2) Nombre visible en Auth
+      await cred.user?.updateDisplayName(name);
+
+      // 3) Crear/actualizar documento en Firestore
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(cred.user!.uid)
+          .set({
+            'email': email,
+            'nombre': name,
+            'photoURL': cred.user?.photoURL,
+            'createdAt': FieldValue.serverTimestamp(),
+          }, SetOptions(merge: true));
+
+      // 4) Ir a Home
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Cuenta creada. ¡Bienvenido!')),
+      );
+      Navigator.pushReplacementNamed(context, 'home');
     } on FirebaseAuthException catch (e) {
-      // Si hay un error, muestra un mensaje de error
+      // 👈 aquí va "catch (e)" y no "as e"
+      if (!mounted) return;
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('Error: ${e.message}')));
+    } catch (e, _) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error: $e')));
+    } finally {
+      if (mounted) setState(() => _loading = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor:
-          AppColors.backgroundColor, // Establecer el color de fondo
+      backgroundColor: AppColors.backgroundColor,
       appBar: AppBar(
         title: const Text('Crear cuenta'),
-        backgroundColor: AppColors.primaryColor, // Color del AppBar
+        backgroundColor: AppColors.primaryColor,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
-          crossAxisAlignment:
-              CrossAxisAlignment.start, // Alineado a la izquierda
+          crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              'Create an', // Título de bienvenida (Create)
+              'Create an',
               style: AppTextStyles.titleStyle.copyWith(
                 fontSize: 50,
                 fontWeight: FontWeight.bold,
@@ -74,7 +94,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             ),
             const SizedBox(height: 5),
             Text(
-              'Account', // Título de bienvenida (Account)
+              'Account',
               style: AppTextStyles.titleStyle.copyWith(
                 fontSize: 50,
                 fontWeight: FontWeight.bold,
@@ -83,7 +103,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             ),
             const SizedBox(height: 20),
             Container(
-              width: double.infinity, // Hacer el formulario más ancho
+              width: double.infinity,
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
                 color: Colors.white,
@@ -116,16 +136,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     obscureText: !_isPasswordVisible,
                     icon: const Icon(Icons.lock),
                   ),
-                  const SizedBox(height: 10),
                   const SizedBox(height: 20),
                   ElevatedButton(
-                    onPressed: _register, // Llama la función de registro
-                    style: AppButtonStyles
-                        .mainButtonStyle, // Usando los estilos del botón
-                    child: Text(
-                      'Create Account',
-                      style: AppTextStyles.buttonTextStyle,
-                    ), // Estilo del texto
+                    onPressed: _loading ? null : _register,
+                    style: AppButtonStyles.mainButtonStyle,
+                    child: _loading
+                        ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : Text(
+                            'Create Account',
+                            style: AppTextStyles.buttonTextStyle,
+                          ),
                   ),
                 ],
               ),
@@ -142,17 +166,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 SocialLoginButton(
-                  icon: const Icon(Icons.g_mobiledata), // Google icon
+                  icon: const Icon(Icons.g_mobiledata),
                   onPressed: () {},
                 ),
                 const SizedBox(width: 20),
                 SocialLoginButton(
-                  icon: const Icon(Icons.apple), // Apple icon
+                  icon: const Icon(Icons.apple),
                   onPressed: () {},
                 ),
                 const SizedBox(width: 20),
                 SocialLoginButton(
-                  icon: const Icon(Icons.facebook), // Facebook icon
+                  icon: const Icon(Icons.facebook),
                   onPressed: () {},
                 ),
               ],
@@ -166,13 +190,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   style: AppTextStyles.createAccountStyle,
                 ),
                 TextButton(
-                  onPressed: () {
-                    Navigator.pushNamed(context, 'init'); // Redirigir al login
-                  },
-                  child: Text(
-                    'Login',
-                    style: AppTextStyles.signUpStyle, // Texto subrayado y verde
-                  ),
+                  onPressed: () => Navigator.pushNamed(context, 'init'),
+                  child: Text('Login', style: AppTextStyles.signUpStyle),
                 ),
               ],
             ),

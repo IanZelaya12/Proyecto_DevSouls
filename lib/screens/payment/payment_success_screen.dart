@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 
 class PaymentSuccessScreen extends StatelessWidget {
-  const PaymentSuccessScreen({super.key});
+  final VoidCallback onContinue; // <<-- NUEVO
+
+  const PaymentSuccessScreen({super.key, required this.onContinue});
+
   @override
   Widget build(BuildContext context) {
     return Dialog(
@@ -34,10 +37,8 @@ class PaymentSuccessScreen extends StatelessWidget {
             const SizedBox(height: 16),
             ElevatedButton(
               onPressed: () {
-                Navigator.of(context).pop(); // cierra dialog
-                Navigator.of(
-                  context,
-                ).pop(); // opcional: vuelve a pantalla anterior
+                Navigator.of(context).pop(); // cierra solo el diálogo
+                onContinue(); // avisa al padre que siga al Home
               },
               child: const Text('Continue'),
             ),

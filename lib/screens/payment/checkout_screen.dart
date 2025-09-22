@@ -6,8 +6,8 @@ enum PaymentMethodType { stripeCard, paypal, applePay }
 
 class CheckoutScreen extends StatefulWidget {
   final String reservationId;
-  final int amountCents; // p. ej., 1250 = 12.50
-  final String currency; // 'HNL', 'USD', etc.
+  final int amountCents;
+  final String currency; // 'HNL', etc.
   final String courtName;
 
   const CheckoutScreen({
@@ -32,6 +32,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     return f.format(widget.amountCents / 100);
   }
 
+  void _goHome() {
+    // Usa tu ruta nombrada del main.dart
+    Navigator.of(context).pushNamedAndRemoveUntil('home', (route) => false);
+  }
+
   Future<void> _processPayment() async {
     if (!_acceptedTerms) {
       _snack('Debes aceptar los términos y condiciones.');
@@ -40,28 +45,16 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     setState(() => _isPaying = true);
 
     try {
-      // -----------------------------
-      // Aquí iría tu lógica real de pago.
-      // Ejemplo con Stripe (solo referencia):
-      //
-      // 1) Obtén clientSecret desde tu backend (Firebase Functions).
-      // 2) Confirma pago (stripe.confirmPayment).
-      //
-      // En este ejemplo, simulamos 1.2s de proceso:
-      // -----------------------------
+      // Aquí iría tu lógica real de pago (Stripe/PayPal/ApplePay)
       await Future.delayed(const Duration(milliseconds: 1200));
-
       if (!mounted) return;
 
-      // Al pagar con éxito, abrimos tu diálogo de éxito:
+      // Mostramos el diálogo de éxito; al continuar, vamos a Home:
       await showDialog(
         context: context,
         barrierDismissible: false,
-        builder: (_) => const PaymentSuccessScreen(),
+        builder: (_) => PaymentSuccessScreen(onContinue: _goHome),
       );
-
-      // Opcional: volver a la pantalla anterior
-      // Navigator.of(context).pop();
     } catch (e) {
       _snack('Error al procesar el pago: $e');
     } finally {
@@ -233,7 +226,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             ],
           ),
 
-          // Overlay de carga
           if (_isPaying)
             Container(
               color: Colors.black.withOpacity(0.08),

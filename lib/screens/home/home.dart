@@ -8,6 +8,7 @@ import '../../data/dummy_data.dart'; // Importar datos de ejemplo (o tu modelo d
 import '../sport_filters/sports_filter_screen.dart'; // Importar SportsFilterScreen
 import '../Reservas/reservas.dart';
 import '../Perfil/perfil.dart';
+import '../Mapa/mapa.dart'; // 👈 NUEVO: pantalla de Mapa
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -34,7 +35,9 @@ class _HomeScreenState extends State<HomeScreen> {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
       // Si el usuario no está autenticado, redirige a Login
-      Navigator.pushReplacementNamed(context, 'init'); // Ruta al login
+      if (mounted) {
+        Navigator.pushReplacementNamed(context, 'init'); // Ruta al login
+      }
     } else {
       setState(() {
         this.user = user;
@@ -63,15 +66,21 @@ class _HomeScreenState extends State<HomeScreen> {
               _selectedIndex = index;
             });
           },
-          children: [
-            // Página principal Home
-            _buildHomePage(),
-            // Página de filtros de deportes
+          children: const [
+            // 1) Página principal Home
+            _HomePageContent(),
+
+            // 2) NUEVA: Página del Mapa
+            MapaScreen(),
+
+            // 3) Página de filtros de deportes
             SportsFilterScreen(),
-            // Página de Reservas
-            const ReservasScreen(), // Agregar la pantalla de reservas aquí
-            // Puedes agregar más pantallas como Perfil si lo deseas
-            const PerfilScreen(), //Perfil
+
+            // 4) Página de Reservas
+            ReservasScreen(),
+
+            // 5) Página de Perfil
+            PerfilScreen(),
           ],
         ),
       ),
@@ -80,139 +89,24 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // Página de inicio (Home)
-  Widget _buildHomePage() {
-    return SingleChildScrollView(
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header: Mostrar nombre del usuario logeado
-            _buildHeader(),
-            const SizedBox(height: 20),
-            _buildFilterChips(),
-            const SizedBox(height: 24),
-
-            // Featured Courts Carousel
-            SizedBox(
-              height: 250,
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                itemCount: dummyCourts
-                    .length, // Asegúrate de que dummyCourts tenga los datos
-                itemBuilder: (context, index) {
-                  return FeaturedCourtCard(court: dummyCourts[index]);
-                },
-              ),
-            ),
-            const SizedBox(height: 24),
-
-            // Recent Views List
-            _buildRecentViewsHeader(context),
-            const SizedBox(height: 10),
-            ListView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: dummyCourts
-                  .length, // Asegúrate de que dummyCourts tenga los datos
-              itemBuilder: (context, index) {
-                return RecentCourtListItem(court: dummyCourts[index]);
-              },
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // Header: Mostrar el nombre del usuario logeado
-  Widget _buildHeader() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              '¡BIENVENIDO!',
-              style: TextStyle(fontSize: 14, color: Colors.grey),
-            ),
-            Text(
-              user?.displayName ?? 'Usuario', // Mostrar nombre del usuario
-              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
-          ],
-        ),
-        Row(
-          children: [
-            IconButton(
-              onPressed: () {},
-              icon: const Icon(Icons.notifications_none),
-            ),
-            IconButton(
-              onPressed: () {},
-              icon: const Icon(Icons.bookmark_border),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  // Chips de filtro (como Recomendado, Fútbol, etc.)
-  Widget _buildFilterChips() {
-    return SizedBox(
-      height: 35,
-      child: ListView(
-        scrollDirection: Axis.horizontal,
-        children: [
-          _buildChoiceChip('Recomendado', isSelected: true),
-          _buildChoiceChip('Fútbol'),
-          _buildChoiceChip('Tennis'),
-          _buildChoiceChip('Natación'),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildChoiceChip(String label, {bool isSelected = false}) {
-    return Padding(
-      padding: const EdgeInsets.only(right: 8.0),
-      child: ChoiceChip(
-        label: Text(label),
-        selected: isSelected,
-        onSelected: (selected) {},
-        backgroundColor: Colors.white,
-        selectedColor: Colors.green.shade100,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        side: BorderSide.none,
-      ),
-    );
-  }
-
-  // Recent Views Header
-  Widget _buildRecentViewsHeader(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text('Vistas recientes', style: Theme.of(context).textTheme.titleLarge),
-        TextButton(onPressed: () {}, child: const Text('Ver todo')),
-      ],
-    );
-  }
-
   // BottomNavigationBar con íconos y color de selección
   Widget _buildBottomNavigationBar() {
     return BottomNavigationBar(
-      currentIndex: _selectedIndex, // Indicar el ítem seleccionado
-      backgroundColor: Colors.green, // Color de fondo del menú inferior
-      selectedItemColor: Colors.green, // Color del ítem seleccionado
-      unselectedItemColor: Colors.grey, // Color de los ítems no seleccionados
+      type: BottomNavigationBarType.fixed,
+      currentIndex: _selectedIndex, // Ítem seleccionado
+      backgroundColor:
+          Colors.white, // OJO: si no se ve bien, cambia a Colors.white
+      selectedItemColor:
+          Colors.green, // En fondo verde quizás prefieras Colors.white
+      unselectedItemColor: Colors.grey,
       items: const <BottomNavigationBarItem>[
         BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
         BottomNavigationBarItem(
-          icon: Icon(Icons.sports_soccer), // Ícono de deporte
+          icon: Icon(Icons.map_outlined), // 👈 Ícono de Mapa
+          label: 'Mapa',
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.sports_soccer), // Ícono de deportes
           label: 'Deportes',
         ),
         BottomNavigationBarItem(
@@ -224,7 +118,138 @@ class _HomeScreenState extends State<HomeScreen> {
           label: 'Perfil',
         ),
       ],
-      onTap: _onItemTapped, // Llama la función para manejar el cambio de índice
+      onTap: _onItemTapped,
+    );
+  }
+}
+
+/// Contenido de la pestaña Home (tu contenido original), movido a un widget
+/// separado para que el PageView pueda ser const y más eficiente.
+class _HomePageContent extends StatelessWidget {
+  const _HomePageContent();
+
+  @override
+  Widget build(BuildContext context) {
+    final user = FirebaseAuth.instance.currentUser;
+
+    return SingleChildScrollView(
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header: Mostrar nombre del usuario logeado
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      '¡BIENVENIDO!',
+                      style: TextStyle(fontSize: 14, color: Colors.grey),
+                    ),
+                    Text(
+                      user?.displayName ??
+                          'Usuario', // Mostrar nombre del usuario
+                      style: const TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+                Row(
+                  children: [
+                    IconButton(
+                      onPressed: () {},
+                      icon: const Icon(Icons.notifications_none),
+                    ),
+                    IconButton(
+                      onPressed: () {},
+                      icon: const Icon(Icons.bookmark_border),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 20),
+
+            // Chips de filtro
+            SizedBox(
+              height: 35,
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+                children: const [
+                  _ChoiceChip(label: 'Recomendado', isSelected: true),
+                  _ChoiceChip(label: 'Fútbol'),
+                  _ChoiceChip(label: 'Tennis'),
+                  _ChoiceChip(label: 'Natación'),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 24),
+
+            // Featured Courts Carousel
+            SizedBox(
+              height: 250,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                itemCount: dummyCourts.length,
+                itemBuilder: (context, index) {
+                  return FeaturedCourtCard(court: dummyCourts[index]);
+                },
+              ),
+            ),
+            const SizedBox(height: 24),
+
+            // Recent Views List
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Vistas recientes',
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+                TextButton(onPressed: () {}, child: const Text('Ver todo')),
+              ],
+            ),
+            const SizedBox(height: 10),
+            ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: dummyCourts.length,
+              itemBuilder: (context, index) {
+                return RecentCourtListItem(court: dummyCourts[index]);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ChoiceChip extends StatelessWidget {
+  final String label;
+  final bool isSelected;
+  const _ChoiceChip({required this.label, this.isSelected = false});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(right: 8.0),
+      child: ChoiceChip(
+        label: Text(label),
+        selected: isSelected,
+        onSelected: (_) {},
+        backgroundColor: Colors.white,
+        selectedColor: Colors.green.shade100,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        side: BorderSide.none,
+      ),
     );
   }
 }
