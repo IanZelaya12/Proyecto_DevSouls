@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../models/court_model.dart' show Court;
-import '../../models/court_model.dart';
+import 'package:proyecto_devsouls/models/court_model.dart';
 
 class FeaturedCourtCard extends StatelessWidget {
   final Court court;

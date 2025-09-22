@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:proyecto_devsouls/screens/Reservas/reservation_screen.dart';
 import 'widgets/reserva_card.dart';
+// <-- Importa la pantalla de reservar
 
 class Reserva {
   final String nombre;
@@ -93,7 +95,20 @@ class _ReservasScreenState extends State<ReservasScreen> {
                     : ListView.builder(
                         itemCount: filteredReservas.length,
                         itemBuilder: (context, index) {
-                          return ReservaCard(reserva: filteredReservas[index]);
+                          final r = filteredReservas[index];
+                          return ReservaCard(
+                            reserva: r,
+                            onTap: () {
+                              // Al tocar, navega a la pantalla de Reservar
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) =>
+                                      ReservationScreen(venueName: r.nombre),
+                                ),
+                              );
+                            },
+                          );
                         },
                       ),
               ),

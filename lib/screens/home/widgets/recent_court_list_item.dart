@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import '../../models/court_model.dart';
+import 'package:proyecto_devsouls/models/court_model.dart';
 
 class RecentCourtListItem extends StatelessWidget {
-  final  court;
+  final court;
   const RecentCourtListItem({super.key, required this.court});
 
   @override

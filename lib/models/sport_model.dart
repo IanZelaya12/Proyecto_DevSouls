@@ -1,9 +1,9 @@
-import 'package.flutter/material.dart';
+import 'package:flutter/material.dart'; // <- estaba mal escrito (package.flutter)
 
 class Sport {
   final String name;
   final String imagePath;
-  final color;
+  final Color color; // <- dale tipo
 
   const Sport({
     required this.name,
