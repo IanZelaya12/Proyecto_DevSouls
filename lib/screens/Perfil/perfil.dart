@@ -1,82 +1,60 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart'; // Para obtener datos del usuario
-import 'widgets/perfil_card.dart'; // Usamos el widget creado anteriormente
+import 'package:proyecto_devsouls/auth/user_service.dart';
 import 'editar_perfil.dart';
-import 'package:google_fonts/google_fonts.dart'; // Usar Google Fonts
+import 'widgets/perfil_card.dart';
 
 class PerfilScreen extends StatelessWidget {
   const PerfilScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // Obtener los datos del usuario desde Firebase
-    User? user = FirebaseAuth.instance.currentUser;
-    String displayName = user?.displayName ?? 'Usuario';
-    String email = user?.email ?? 'No disponible';
-    String photoURL = user?.photoURL ?? ''; // Foto de perfil (opcional)
+    final userService = UserService();
 
     return Scaffold(
-      backgroundColor: const Color.fromARGB(255, 2, 83, 63),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: PerfilCard(
-            name: displayName,
-            email: email,
+      backgroundColor: const Color.fromARGB(255, 15, 172, 106),
+      appBar: AppBar(
+        backgroundColor: const Color.fromARGB(255, 15, 172, 106),
+        elevation: 0,
+        title: const Text(
+          'Perfil',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
+        centerTitle: true,
+      ),
+      body: StreamBuilder<Map<String, dynamic>?>(
+        stream: userService.streamUserData(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(
+              child: CircularProgressIndicator(color: Colors.white),
+            );
+          }
+
+          if (!snapshot.hasData || snapshot.data == null) {
+            return const Center(
+              child: Text(
+                'No se encontraron datos del usuario',
+                style: TextStyle(color: Colors.white, fontSize: 18),
+              ),
+            );
+          }
+
+          final userData = snapshot.data!;
+
+          return PerfilCard(
+            userData: userData, // ✅ ahora se pasa el mapa completo
             onEditProfile: () {
-              // Navegar a la pantalla de editar perfil
               Navigator.push(
                 context,
-                MaterialPageRoute(
-                  builder: (context) => const EditPerfilScreen(),
-                ),
+                MaterialPageRoute(builder: (_) => const EditPerfilScreen()),
               );
             },
-            onSignOut: () {
-              // Mostrar la ventana emergente para confirmar cerrar sesión
-              showDialog(
-                context: context,
-                builder: (BuildContext context) {
-                  return AlertDialog(
-                    title: Text(
-                      '¿Cerrar sesión?',
-                      style: TextStyle(fontSize: 18),
-                    ),
-                    content: Text(
-                      'Podrás volver a iniciar más tarde. Se guardarán tus cambios.',
-                      style: TextStyle(fontSize: 16),
-                    ),
-                    actions: <Widget>[
-                      TextButton(
-                        onPressed: () {
-                          Navigator.of(context).pop(); // Cerrar el diálogo
-                        },
-                        child: Text(
-                          'Cancelar',
-                          style: TextStyle(color: Colors.black),
-                        ),
-                      ),
-                      TextButton(
-                        onPressed: () async {
-                          // Cerrar sesión
-                          await FirebaseAuth.instance.signOut();
-                          Navigator.pushReplacementNamed(
-                            context,
-                            'init', // Redirigir al login
-                          );
-                        },
-                        child: Text(
-                          'Confirmar',
-                          style: TextStyle(color: Colors.black),
-                        ),
-                      ),
-                    ],
-                  );
-                },
-              );
+            onSignOut: () async {
+              await userService.signOut();
+              Navigator.pushReplacementNamed(context, 'init');
             },
-          ),
-        ),
+          );
+        },
       ),
     );
   }

@@ -26,7 +26,7 @@ class MyApp extends StatelessWidget {
       routes: {
         'intro': (context) =>
             const IntroScreen(), // Ruta para las pantallas de introducción
-        'init': (context) => const LoginScreen(), // Ruta para el login
+        'init': (context) => LoginScreen(), // Ruta para el login
         'register': (context) =>
             const RegisterScreen(), // Ruta para el registro
         'home': (context) =>
