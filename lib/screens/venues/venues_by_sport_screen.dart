@@ -1,6 +1,7 @@
 // lib/screens/venues/venues_by_sport_screen.dart
 import 'package:flutter/material.dart';
 import '../sport_filters/widgets/styles.dart';
+import '../Reservas/reservation_screen.dart';
 
 class VenuesBySportScreen extends StatefulWidget {
   final String sportName;
@@ -170,7 +171,6 @@ class _VenuesBySportScreenState extends State<VenuesBySportScreen> {
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
         onTap: () {
-          // Navegar a detalles del lugar
           _showVenueDetails(venue);
         },
         child: Padding(
@@ -305,7 +305,12 @@ class _VenuesBySportScreenState extends State<VenuesBySportScreen> {
               child: ElevatedButton(
                 onPressed: () {
                   Navigator.pop(context);
-                  // Aquí puedes agregar lógica para reservar o contactar
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => ReservationScreen(venueName: venue.name),
+                    ),
+                  );
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primaryColor,
