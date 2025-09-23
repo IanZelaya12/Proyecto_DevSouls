@@ -3,9 +3,16 @@ import '../reservas.dart';
 
 class ReservaCard extends StatelessWidget {
   final Reserva reserva;
-  final VoidCallback? onTap; // <-- NUEVO
+  final VoidCallback? onTap; // Callback cuando la tarjeta es tocada
+  final VoidCallback?
+  onCancel; // Callback cuando el ícono de cancelación es tocado
 
-  const ReservaCard({super.key, required this.reserva, this.onTap});
+  const ReservaCard({
+    super.key,
+    required this.reserva,
+    this.onTap,
+    this.onCancel,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -16,7 +23,7 @@ class ReservaCard extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
-        onTap: onTap, // <-- llama al callback
+        onTap: onTap, // Llama al callback al tocar la tarjeta
         child: Card(
           margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
           shape: RoundedRectangleBorder(
@@ -29,21 +36,15 @@ class ReservaCard extends StatelessWidget {
               height: 160,
               child: Stack(
                 children: [
-                  // Imagen de fondo
+                  // Fondo gris por defecto
                   Positioned.fill(
-                    child: Image.asset(
-                      reserva.imagen,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Container(
-                          color: Colors.grey[400],
-                          child: Icon(
-                            Icons.sports,
-                            size: screenWidth * 0.15,
-                            color: Colors.white.withOpacity(0.6),
-                          ),
-                        );
-                      },
+                    child: Container(
+                      color: Colors.grey[400],
+                      child: Icon(
+                        Icons.sports,
+                        size: screenWidth * 0.15,
+                        color: Colors.white.withOpacity(0.6),
+                      ),
                     ),
                   ),
                   // Degradado oscuro para legibilidad
@@ -86,6 +87,19 @@ class ReservaCard extends StatelessWidget {
                           ),
                         ),
                       ],
+                    ),
+                  ),
+                  // Ícono de cancelación
+                  Positioned(
+                    right: 8,
+                    top: 8,
+                    child: IconButton(
+                      icon: const Icon(
+                        Icons.cancel,
+                        color: Colors.red,
+                        size: 30,
+                      ),
+                      onPressed: onCancel, // Llama al callback de cancelación
                     ),
                   ),
                 ],

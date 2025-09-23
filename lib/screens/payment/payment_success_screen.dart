@@ -37,8 +37,8 @@ class PaymentSuccessScreen extends StatelessWidget {
             const SizedBox(height: 16),
             ElevatedButton(
               onPressed: () {
-                Navigator.of(context).pop(); // cierra solo el diálogo
-                onContinue(); // avisa al padre que siga al Home
+                Navigator.of(context).pop(); // Cierra el diálogo
+                onContinue(); // Avisa al padre que siga al Home
               },
               child: const Text('Continue'),
             ),

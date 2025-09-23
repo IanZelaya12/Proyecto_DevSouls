@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'payment_success_screen.dart';
+import '..//Perfil/editar_perfil.dart';
 
 enum PaymentMethodType { stripeCard, paypal, applePay }
 
@@ -23,33 +26,70 @@ class CheckoutScreen extends StatefulWidget {
 }
 
 class _CheckoutScreenState extends State<CheckoutScreen> {
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _db = FirebaseFirestore.instance;
+
+  bool _isPaying = false;
+  bool _hasBankInfo =
+      false; // Para verificar si tiene los datos bancarios completos
+  bool _hasPaymentInfo = false; // Verificar si tiene tarjeta, PayPal, etc.
   PaymentMethodType _method = PaymentMethodType.stripeCard;
   bool _acceptedTerms = false;
-  bool _isPaying = false;
 
   String get _amountFormatted {
     final f = NumberFormat.simpleCurrency(name: widget.currency);
     return f.format(widget.amountCents / 100);
   }
 
-  void _goHome() {
-    // Usa tu ruta nombrada del main.dart
-    Navigator.of(context).pushNamedAndRemoveUntil('home', (route) => false);
+  // Método para cargar los datos desde Firestore (perfil + métodos de pago)
+  Future<void> _loadPaymentMethods() async {
+    final uid = _auth.currentUser!.uid;
+
+    // Cargar los datos de perfil (nombre, email, etc.)
+    final userDoc = await _db.collection('users').doc(uid).get();
+    final userData = userDoc.data();
+    if (userData != null) {
+      setState(() {
+        // Verificar los datos bancarios
+        _hasBankInfo =
+            userData['bankAccountNumber'] != null &&
+            userData['accountHolder'] != null;
+        _hasPaymentInfo =
+            _hasBankInfo ||
+            userData['paypalEmail'] != null ||
+            userData['applePay'] != null;
+      });
+    }
   }
 
+  // Verificar los datos bancarios antes de permitir el pago
   Future<void> _processPayment() async {
     if (!_acceptedTerms) {
       _snack('Debes aceptar los términos y condiciones.');
       return;
     }
+
+    // Verificar si tiene datos de pago completos (banco, tarjeta, etc.)
+    if (!_hasPaymentInfo) {
+      _showMissingPaymentInfoModal();
+      return;
+    }
+
     setState(() => _isPaying = true);
 
     try {
-      // Aquí iría tu lógica real de pago (Stripe/PayPal/ApplePay)
+      // Simulación del proceso de pago
       await Future.delayed(const Duration(milliseconds: 1200));
+
+      if (!_hasPaymentInfo) {
+        // Si no hay información de pago, no se debería continuar
+        _snack('No tienes los datos de pago completos.');
+        return;
+      }
+
       if (!mounted) return;
 
-      // Mostramos el diálogo de éxito; al continuar, vamos a Home:
+      // Mostrar el diálogo de éxito solo si todo es válido
       await showDialog(
         context: context,
         barrierDismissible: false,
@@ -62,8 +102,49 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     }
   }
 
+  // Mostrar ventana emergente si falta información de pago
+  void _showMissingPaymentInfoModal() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => AlertDialog(
+        title: const Text('Información de Pago Requerida'),
+        content: const Text(
+          'Por favor, ingresa o completa tu información de pago en tu perfil.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context); // Cerrar el modal
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const EditPerfilScreen(),
+                ), // Redirigir a editar perfil
+              );
+            },
+            child: const Text('Ir a Editar Perfil'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Redirigir al home después de un pago exitoso
+  void _goHome() {
+    Navigator.of(
+      context,
+    ).pushNamedAndRemoveUntil('home', (route) => false); // Redirige a Home
+  }
+
   void _snack(String msg) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPaymentMethods(); // Cargar datos de Firestore
   }
 
   @override
@@ -134,12 +215,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   ),
                 ),
               ),
-
               const SizedBox(height: 16),
 
               // Métodos de pago
               Text(
-                'Método de pago',
+                'Métodos de pago',
                 style: theme.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w600,
                 ),
@@ -225,7 +305,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               ),
             ],
           ),
-
           if (_isPaying)
             Container(
               color: Colors.black.withOpacity(0.08),

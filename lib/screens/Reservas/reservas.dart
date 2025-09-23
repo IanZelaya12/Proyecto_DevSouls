@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:proyecto_devsouls/screens/Reservas/reservation_screen.dart';
 import 'widgets/reserva_card.dart';
-// <-- Importa la pantalla de reservar
 
+// Modelo de reserva
 class Reserva {
   final String nombre;
   final String fecha;
-  final String imagen;
 
-  Reserva(this.nombre, this.fecha, this.imagen);
+  Reserva(this.nombre, this.fecha);
 }
 
 class ReservasScreen extends StatefulWidget {
@@ -20,7 +19,7 @@ class ReservasScreen extends StatefulWidget {
 
 class _ReservasScreenState extends State<ReservasScreen> {
   TextEditingController searchController = TextEditingController();
-  List<Reserva> filteredReservas = reservas; // Inicialmente todas
+  List<Reserva> filteredReservas = reservas; // Lista de reservas
 
   @override
   void initState() {
@@ -36,6 +35,38 @@ class _ReservasScreenState extends State<ReservasScreen> {
             reserva.fecha.toLowerCase().contains(query);
       }).toList();
     });
+  }
+
+  void _cancelReserva(int index) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Cancelar Reserva'),
+          content: const Text(
+            '¿Estás seguro de que deseas cancelar esta reserva?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context); // Cierra el diálogo sin hacer nada
+              },
+              child: const Text('No'),
+            ),
+            TextButton(
+              onPressed: () {
+                setState(() {
+                  reservas.removeAt(index); // Elimina la reserva de la lista
+                  filteredReservas = reservas; // Actualiza la lista filtrada
+                });
+                Navigator.pop(context); // Cierra el diálogo después de cancelar
+              },
+              child: const Text('Sí'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -70,17 +101,7 @@ class _ReservasScreenState extends State<ReservasScreen> {
               ),
               const SizedBox(height: 20),
 
-              // Título
-              const Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  'Reservas Disponibles',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-              ),
-              const SizedBox(height: 10),
-
-              // Lista filtrada
+              // Lista filtrada de reservas
               Expanded(
                 child: filteredReservas.isEmpty
                     ? Center(
@@ -108,6 +129,10 @@ class _ReservasScreenState extends State<ReservasScreen> {
                                 ),
                               );
                             },
+                            onCancel: () {
+                              // Llamar al método de cancelación al tocar el ícono de cancelación
+                              _cancelReserva(index);
+                            },
                           );
                         },
                       ),
@@ -120,22 +145,5 @@ class _ReservasScreenState extends State<ReservasScreen> {
   }
 }
 
-// Datos de ejemplo
-List<Reserva> reservas = [
-  Reserva(
-    'Cancha de Fútbol',
-    'Martes - 17/08 a las 09:30',
-    'assets/img/futbol.png',
-  ),
-  Reserva(
-    'Piscina para Natación',
-    'Sábado - 19/09 a las 09:30',
-    'assets/img/natacion.png',
-  ),
-  Reserva('Gimnasia', 'Domingo - 21/03 a las 09:30', 'assets/img/gimnasia.png'),
-  Reserva(
-    'Ring de Judo',
-    'Lunes - 21/08 a las 12:30',
-    'assets/img/artes_marciales.png',
-  ),
-];
+// Lista vacía de reservas
+List<Reserva> reservas = [];

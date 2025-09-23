@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../sport_filters/widgets/styles.dart';
 import '../payment/checkout_screen.dart';
+import 'reservas.dart';
 
 class ReservationScreen extends StatefulWidget {
   final String venueName;
@@ -73,7 +74,6 @@ class _ReservationScreenState extends State<ReservationScreen> {
               widget.venueName,
               style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
-
             const SizedBox(height: 24),
             Text(
               "Selecciona fecha y hora",
@@ -119,7 +119,7 @@ class _ReservationScreenState extends State<ReservationScreen> {
                     return;
                   }
 
-                  // Generar fecha/hora combinada (si la quieres usar en checkout)
+                  // Generar fecha/hora combinada
                   final DateTime reservationDateTime = DateTime(
                     selectedDate!.year,
                     selectedDate!.month,
@@ -128,7 +128,27 @@ class _ReservationScreenState extends State<ReservationScreen> {
                     selectedTime!.minute,
                   );
 
-                  // ID único de reserva (ejemplo simple)
+                  // Crear una nueva reserva
+                  final newReserva = Reserva(
+                    widget.venueName, // Nombre del lugar de la reserva
+                    '${reservationDateTime.day}/${reservationDateTime.month}/${reservationDateTime.year} a las ${reservationDateTime.hour}:${reservationDateTime.minute.toString().padLeft(2, '0')}', // Fecha y hora
+                  );
+
+                  // Aquí agregas la nueva reserva a la lista de reservas
+                  setState(() {
+                    reservas.add(newReserva); // Actualiza la lista de reservas
+                  });
+
+                  // Regresar a ReservasScreen con la nueva reserva
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) =>
+                          ReservasScreen(), // Esto reinicia la pantalla de reservas para mostrar la nueva lista
+                    ),
+                  );
+
+                  // Generar ID único de reserva
                   final String reservationId =
                       'RES-${DateTime.now().millisecondsSinceEpoch}';
 
