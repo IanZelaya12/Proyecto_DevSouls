@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:intl/intl.dart';
 import 'payment_success_screen.dart';
 import '..//Perfil/editar_perfil.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 enum PaymentMethodType { stripeCard, paypal, applePay }
 
@@ -28,11 +29,12 @@ class CheckoutScreen extends StatefulWidget {
 class _CheckoutScreenState extends State<CheckoutScreen> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _db = FirebaseFirestore.instance;
+  final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+      FlutterLocalNotificationsPlugin(); // Notificaciones
 
   bool _isPaying = false;
-  bool _hasBankInfo =
-      false; // Para verificar si tiene los datos bancarios completos
-  bool _hasPaymentInfo = false; // Verificar si tiene tarjeta, PayPal, etc.
+  bool _hasBankInfo = false;
+  bool _hasPaymentInfo = false;
   PaymentMethodType _method = PaymentMethodType.stripeCard;
   bool _acceptedTerms = false;
 
@@ -50,7 +52,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     final userData = userDoc.data();
     if (userData != null) {
       setState(() {
-        // Verificar los datos bancarios
         _hasBankInfo =
             userData['bankAccountNumber'] != null &&
             userData['accountHolder'] != null;
@@ -95,6 +96,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         barrierDismissible: false,
         builder: (_) => PaymentSuccessScreen(onContinue: _goHome),
       );
+
+      // Notificación de pago exitoso
+      await _showPaymentNotification(
+        widget.reservationId,
+        _amountFormatted,
+        widget.courtName,
+      );
     } catch (e) {
       _snack('Error al procesar el pago: $e');
     } finally {
@@ -137,6 +145,32 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     ).pushNamedAndRemoveUntil('home', (route) => false); // Redirige a Home
   }
 
+  // Mostrar la notificación
+  Future<void> _showPaymentNotification(
+    String reservationId,
+    String amount,
+    String courtName,
+  ) async {
+    const AndroidNotificationDetails androidPlatformChannelSpecifics =
+        AndroidNotificationDetails(
+          'payment_channel',
+          'Payment Notifications',
+          importance: Importance.high,
+          priority: Priority.high,
+        );
+    const NotificationDetails platformChannelSpecifics = NotificationDetails(
+      android: androidPlatformChannelSpecifics,
+    );
+
+    await flutterLocalNotificationsPlugin.show(
+      0,
+      'Pago Confirmado',
+      'Reserva #$reservationId en $courtName por $amount ha sido completado.',
+      platformChannelSpecifics,
+      payload: 'item x',
+    );
+  }
+
   void _snack(String msg) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
   }
@@ -145,6 +179,16 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   void initState() {
     super.initState();
     _loadPaymentMethods(); // Cargar datos de Firestore
+    _initializeNotifications(); // Inicializar notificaciones
+  }
+
+  // Inicialización de notificaciones
+  Future<void> _initializeNotifications() async {
+    const AndroidInitializationSettings initializationSettingsAndroid =
+        AndroidInitializationSettings('@mipmap/ic_launcher');
+    const InitializationSettings initializationSettings =
+        InitializationSettings(android: initializationSettingsAndroid);
+    await flutterLocalNotificationsPlugin.initialize(initializationSettings);
   }
 
   @override

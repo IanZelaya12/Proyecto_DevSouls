@@ -159,16 +159,10 @@ class _HomePageContent extends StatelessWidget {
                     ),
                   ],
                 ),
+                // Aquí se eliminaron los iconos de notificaciones y favoritos
                 Row(
                   children: [
-                    IconButton(
-                      onPressed: () {},
-                      icon: const Icon(Icons.notifications_none),
-                    ),
-                    IconButton(
-                      onPressed: () {},
-                      icon: const Icon(Icons.bookmark_border),
-                    ),
+                    // Se eliminan los IconButton para notificaciones y favoritos
                   ],
                 ),
               ],

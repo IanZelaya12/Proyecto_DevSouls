@@ -1,15 +1,29 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart'; // Asegúrate de importar Firebase Core
-import 'screens/login/login.dart'; // Pantalla de login
-import 'screens/register/register.dart'; // Pantalla de registro
-import 'screens/home/home.dart'; // Pantalla de home
-import 'screens/intro/pantalla_principal/intro_screen.dart'; // Pantalla de introducción (nuevo)
+import 'screens/login/login.dart';
+import 'screens/register/register.dart';
+import 'screens/home/home.dart';
+import 'screens/intro/pantalla_principal/intro_screen.dart';
 import 'screens/Mapa/mapa.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(); // Inicializa Firebase
+  await _initializeNotifications(); // Inicializar las notificaciones
   runApp(const MyApp());
+}
+
+// Inicialización de notificaciones
+Future<void> _initializeNotifications() async {
+  final flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+  const AndroidInitializationSettings initializationSettingsAndroid =
+      AndroidInitializationSettings('@mipmap/ic_launcher');
+  const InitializationSettings initializationSettings = InitializationSettings(
+    android: initializationSettingsAndroid,
+  );
+
+  await flutterLocalNotificationsPlugin.initialize(initializationSettings);
 }
 
 class MyApp extends StatelessWidget {
@@ -19,19 +33,13 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Proyecto DevSouls',
-      theme: ThemeData(
-        primarySwatch:
-            Colors.green, // Usamos un tema más relacionado con el color verde
-      ),
-      initialRoute: 'intro', // Cambiar la ruta inicial a 'intro'
+      theme: ThemeData(primarySwatch: Colors.green),
+      initialRoute: 'intro',
       routes: {
-        'intro': (context) =>
-            const IntroScreen(), // Ruta para las pantallas de introducción
-        'init': (context) => LoginScreen(), // Ruta para el login
-        'register': (context) =>
-            const RegisterScreen(), // Ruta para el registro
-        'home': (context) =>
-            const HomeScreen(), // Ruta para la pantalla de Home
+        'intro': (context) => const IntroScreen(),
+        'init': (context) => LoginScreen(),
+        'register': (context) => const RegisterScreen(),
+        'home': (context) => const HomeScreen(),
         'rutaMapa': (context) => const MapaScreen(),
       },
     );

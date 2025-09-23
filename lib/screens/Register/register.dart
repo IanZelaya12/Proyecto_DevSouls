@@ -78,7 +78,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
         title: const Text('Crear cuenta'),
         backgroundColor: AppColors.primaryColor,
       ),
-      body: Padding(
+      body: SingleChildScrollView(
+        // Aquí agregamos el SingleChildScrollView
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

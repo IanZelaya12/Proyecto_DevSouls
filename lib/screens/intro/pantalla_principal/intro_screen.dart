@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart'; // Si deseas usar Cupertino para un estilo iOS
 import 'package:firebase_auth/firebase_auth.dart'; // Importar Firebase Auth para redirigir al login
+import 'package:permission_handler/permission_handler.dart'; // Importar permission_handler
 
 class IntroScreen extends StatefulWidget {
   const IntroScreen({super.key});
@@ -34,6 +35,20 @@ class _IntroScreenState extends State<IntroScreen> {
       'image': 'assets/img/futbol_intro.png', // Ruta de la imagen
     },
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _requestNotificationPermission(); // Solicitar permiso al iniciar la app
+  }
+
+  // Función para solicitar permisos de notificación
+  Future<void> _requestNotificationPermission() async {
+    // Solo para Android 13+
+    if (await Permission.notification.isDenied) {
+      await Permission.notification.request();
+    }
+  }
 
   void _nextPage() {
     if (_currentPage < _pages.length - 1) {
