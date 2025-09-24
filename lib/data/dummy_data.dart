@@ -37,28 +37,51 @@ final List<Sport> dummySports = [
 ];
 
 final List<Court> dummyCourts = [
-  const Court(
+  Court(
     name: 'Cancha de Volleyball',
+    sport: 'Volleyball',
     location: 'Blvd. Morazán, Tegucigalpa',
     price: 35.00,
     imagePath: 'assets/img/volleyball_court.jpg',
     rating: 4.8,
     reviewCount: 120,
+    description:
+        'Una cancha amplia para partidos de volleyball. Ideal para grupos grandes.',
+    facilities: const [
+      'Césped artificial',
+      'Iluminación',
+      'Gradas',
+    ], // Lista constante
   ),
-  const Court(
+  Court(
     name: 'Estadio Atlético',
+    sport: 'Fútbol',
     location: 'Villas del Sol, Tegucigalpa',
     price: 50.00,
     imagePath: 'assets/img/stadium.jpg',
     rating: 4.9,
     reviewCount: 250,
+    description:
+        'Estadio profesional para partidos de fútbol. Capacidad para 5000 personas.',
+    facilities: const [
+      'Césped natural',
+      'Gradas',
+      'Vestidores',
+    ], // Lista constante
   ),
-  const Court(
+  Court(
     name: 'Piscina Olímpica',
+    sport: 'Natacion',
     location: 'Colonia Kennedy, Tegucigalpa',
     price: 25.00,
     imagePath: 'assets/img/pool.jpg',
     rating: 4.7,
     reviewCount: 95,
+    description: 'Piscina olímpica para entrenamientos y competencias.',
+    facilities: const [
+      'Piscina olímpica',
+      'Gradas',
+      'Sauna',
+    ], // Lista constante
   ),
 ];

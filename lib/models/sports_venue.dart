@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class SportsVenue {
   final String id;
   final String name;
@@ -25,35 +27,26 @@ class SportsVenue {
     required this.galleryImages,
   });
 
-  factory SportsVenue.fromJson(Map<String, dynamic> json) {
-    return SportsVenue(
-      id: json['id'] ?? '',
-      name: json['name'] ?? '',
-      sport: json['sport'] ?? '',
-      location: json['location'] ?? '',
-      description: json['description'] ?? '',
-      pricePerHour: (json['pricePerHour'] ?? 0).toDouble(),
-      rating: (json['rating'] ?? 0).toDouble(),
-      reviewCount: json['reviewCount'] ?? 0,
-      imageUrl: json['imageUrl'] ?? '',
-      facilities: List<String>.from(json['facilities'] ?? []),
-      galleryImages: List<String>.from(json['galleryImages'] ?? []),
-    );
-  }
+  // Método para crear un objeto SportsVenue desde Firestore
+  factory SportsVenue.fromFirestore(DocumentSnapshot doc) {
+    Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
 
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'name': name,
-      'sport': sport,
-      'location': location,
-      'description': description,
-      'pricePerHour': pricePerHour,
-      'rating': rating,
-      'reviewCount': reviewCount,
-      'imageUrl': imageUrl,
-      'facilities': facilities,
-      'galleryImages': galleryImages,
-    };
+    return SportsVenue(
+      id: doc.id,
+      name: data['name'] ?? '',
+      sport: data['sport'] ?? '',
+      location: data['location'] ?? '',
+      description: data['description'] ?? '',
+      pricePerHour:
+          data['pricePerHour']?.toDouble() ??
+          0.0, // Asegúrate de convertirlo a double
+      rating:
+          data['rating']?.toDouble() ??
+          0.0, // Asegúrate de convertirlo a double
+      reviewCount: data['reviewCount'] ?? 0,
+      imageUrl: data['imageUrl'] ?? '',
+      facilities: List<String>.from(data['facilities'] ?? []),
+      galleryImages: List<String>.from(data['galleryImages'] ?? []),
+    );
   }
 }

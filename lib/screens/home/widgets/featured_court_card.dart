@@ -17,8 +17,9 @@ class FeaturedCourtCard extends StatelessWidget {
         child: Stack(
           fit: StackFit.expand,
           children: [
-            Image.asset(
-              court.imagePath,
+            // Cambié Image.asset a Image.network
+            Image.network(
+              court.imagePath, // Usamos la URL que viene de Firestore
               fit: BoxFit.cover,
               errorBuilder: (context, error, stackTrace) => Container(
                 color: Colors.grey.shade300,
