@@ -1,6 +1,7 @@
 // lib/screens/login/login.dart
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:proyecto_devsouls/screens/home/home.dart';
 import 'widgets/styles.dart'; // tus estilos y widgets personalizados
 
 class LoginScreen extends StatefulWidget {
@@ -29,7 +30,10 @@ class _LoginScreenState extends State<LoginScreen> {
         context,
       ).showSnackBar(const SnackBar(content: Text('Iniciando sesión...')));
 
-      Navigator.pushReplacementNamed(context, 'home');
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const HomeScreen()),
+      );
     } on FirebaseAuthException catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error: ${e.message ?? 'Error desconocido'}')),

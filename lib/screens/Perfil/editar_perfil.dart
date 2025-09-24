@@ -30,6 +30,13 @@ class _EditPerfilScreenState extends State<EditPerfilScreen> {
   final accountHolderCtrl = TextEditingController();
   final swiftCtrl = TextEditingController();
 
+  // Datos de tarjeta / pagos (solo lectura aquí)
+  final cardHolderCtrl = TextEditingController();
+  final cardLastFourCtrl =
+      TextEditingController(); // mostrar como **** **** **** 1234
+  final cardExpiryCtrl = TextEditingController();
+  final paypalCtrl = TextEditingController();
+
   bool _saving = false;
 
   final List<String> estados = const [
@@ -62,22 +69,40 @@ class _EditPerfilScreenState extends State<EditPerfilScreen> {
 
     // Cargar datos desde Firestore
     if (u != null) {
-      FirebaseFirestore.instance.collection('users').doc(u.uid).get().then((
-        doc,
-      ) {
-        final d = doc.data();
-        if (d != null) {
-          postalCtrl.text = d['postal'] ?? '';
-          addressCtrl.text = d['address'] ?? '';
-          cityCtrl.text = d['city'] ?? '';
-          stateValue = d['state'];
-          countryCtrl.text = d['country'] ?? countryCtrl.text;
-          accountNumberCtrl.text = d['bankAccountNumber'] ?? '';
-          accountHolderCtrl.text = d['accountHolder'] ?? '';
-          swiftCtrl.text = d['swift'] ?? '';
-          setState(() {});
-        }
-      });
+      FirebaseFirestore.instance
+          .collection('users')
+          .doc(u.uid)
+          .get()
+          .then((doc) {
+            final d = doc.data();
+            if (d != null) {
+              postalCtrl.text = d['postal'] ?? '';
+              addressCtrl.text = d['address'] ?? '';
+              cityCtrl.text = d['city'] ?? '';
+              stateValue = d['state'];
+              countryCtrl.text = d['country'] ?? countryCtrl.text;
+              accountNumberCtrl.text = d['bankAccountNumber'] ?? '';
+              accountHolderCtrl.text = d['accountHolder'] ?? '';
+              swiftCtrl.text = d['swift'] ?? '';
+
+              // --- Campos de pago (solo lectura aquí) ---
+              cardHolderCtrl.text = d['cardHolder'] ?? '';
+              cardExpiryCtrl.text = d['cardExpiry'] ?? '';
+              if (d['cardLastFour'] != null &&
+                  (d['cardLastFour'] as String).isNotEmpty) {
+                cardLastFourCtrl.text = '**** **** **** ${d['cardLastFour']}';
+              } else {
+                cardLastFourCtrl.text = '';
+              }
+              paypalCtrl.text = d['paypalEmail'] ?? '';
+
+              setState(() {});
+            }
+          })
+          .catchError((e) {
+            // opcional: manejar error de carga
+            // print('Error cargando perfil: $e');
+          });
     }
   }
 
@@ -93,18 +118,32 @@ class _EditPerfilScreenState extends State<EditPerfilScreen> {
     accountNumberCtrl.dispose();
     accountHolderCtrl.dispose();
     swiftCtrl.dispose();
+
+    // Disponer controladores de pago
+    cardHolderCtrl.dispose();
+    cardLastFourCtrl.dispose();
+    cardExpiryCtrl.dispose();
+    paypalCtrl.dispose();
+
     super.dispose();
   }
 
   Future<void> _sendPasswordReset() async {
     if (emailCtrl.text.isEmpty) return;
-    await _auth.sendPasswordResetEmail(email: emailCtrl.text.trim());
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Te enviamos un correo para cambiar tu contraseña.'),
-      ),
-    );
+    try {
+      await _auth.sendPasswordResetEmail(email: emailCtrl.text.trim());
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Te enviamos un correo para cambiar tu contraseña.'),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error enviando email: $e')));
+    }
   }
 
   Future<void> _save() async {
@@ -114,7 +153,7 @@ class _EditPerfilScreenState extends State<EditPerfilScreen> {
       // 1) Actualizar nombre en Auth
       await _auth.currentUser?.updateDisplayName(nombreCtrl.text.trim());
 
-      // 2) Guardar en Firestore
+      // 2) Guardar en Firestore (merge para no borrar otros campos)
       await FirebaseFirestore.instance
           .collection('users')
           .doc(_auth.currentUser!.uid)
@@ -156,7 +195,7 @@ class _EditPerfilScreenState extends State<EditPerfilScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Checkout'),
+        title: const Text('Editar Perfil'),
         centerTitle: true,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
@@ -244,6 +283,39 @@ class _EditPerfilScreenState extends State<EditPerfilScreen> {
                   ),
                   const SizedBox(height: 12),
                   _field(label: 'BIC / Swift', controller: swiftCtrl),
+
+                  // ===== Payment Methods (solo lectura) =====
+                  const SizedBox(height: 20),
+                  _sectionTitle('Payment Methods'),
+                  const SizedBox(height: 8),
+
+                  // Tarjeta (solo lectura)
+                  _field(
+                    label: 'Card Holder',
+                    controller: cardHolderCtrl,
+                    readOnly: true,
+                  ),
+                  const SizedBox(height: 12),
+                  _field(
+                    label: 'Card (últimos 4 dígitos)',
+                    controller: cardLastFourCtrl,
+                    readOnly: true,
+                  ),
+                  const SizedBox(height: 12),
+                  _field(
+                    label: 'Card Expiry',
+                    controller: cardExpiryCtrl,
+                    readOnly: true,
+                  ),
+                  const SizedBox(height: 16),
+
+                  // PayPal (solo lectura)
+                  _field(
+                    label: 'PayPal Email',
+                    controller: paypalCtrl,
+                    readOnly: true,
+                  ),
+                  const SizedBox(height: 12),
                 ],
               ),
             ),
