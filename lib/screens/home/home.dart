@@ -406,6 +406,91 @@ class _HomePageContent extends StatelessWidget {
               borderRadius: BorderRadius.circular(20),
             ),
           ),
+          ChoiceChip(
+            label: Text('Yoga'),
+            selected: false,
+            onSelected: (selected) {
+              onSportSelected('yoga');
+            },
+            backgroundColor: Colors.white,
+            selectedColor: Colors.green.shade100,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+          ),
+          ChoiceChip(
+            label: Text('Hip Hop'),
+            selected: false,
+            onSelected: (selected) {
+              onSportSelected('hip hop');
+            },
+            backgroundColor: Colors.white,
+            selectedColor: Colors.green.shade100,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+          ),
+          ChoiceChip(
+            label: Text('Natación'),
+            selected: false,
+            onSelected: (selected) {
+              onSportSelected('natación');
+            },
+            backgroundColor: Colors.white,
+            selectedColor: Colors.green.shade100,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+          ),
+          ChoiceChip(
+            label: Text('Basketball'),
+            selected: false,
+            onSelected: (selected) {
+              onSportSelected('basketball');
+            },
+            backgroundColor: Colors.white,
+            selectedColor: Colors.green.shade100,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+          ),
+          ChoiceChip(
+            label: Text('Calistenia'),
+            selected: false,
+            onSelected: (selected) {
+              onSportSelected('calistenia');
+            },
+            backgroundColor: Colors.white,
+            selectedColor: Colors.green.shade100,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+          ),
+          ChoiceChip(
+            label: Text('Gimnasia'),
+            selected: false,
+            onSelected: (selected) {
+              onSportSelected('gimnasia');
+            },
+            backgroundColor: Colors.white,
+            selectedColor: Colors.green.shade100,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+          ),
+          ChoiceChip(
+            label: Text('Voleibol'),
+            selected: false,
+            onSelected: (selected) {
+              onSportSelected('voleibol');
+            },
+            backgroundColor: Colors.white,
+            selectedColor: Colors.green.shade100,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+          ),
+          // Más ChoiceChips según tus deportes...
           // Más ChoiceChips según tus deportes...
         ],
       ),
