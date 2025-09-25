@@ -1,12 +1,12 @@
+// lib/screens/Reservas/reservas.dart
 import 'package:flutter/material.dart';
-import 'package:proyecto_devsouls/services/FirebaseFirestore.dart'; // Importa el servicio Firestore
+import 'package:proyecto_devsouls/services/firebase_firestore.dart';
 
-// Clase Reserva movida aquí directamente desde reserva_model.dart
 class Reserva {
   final String id;
   final String nombre;
   final String fechaHora;
-  final String imageUrl; // Asegúrate de tener este campo
+  final String imageUrl;
   final String hora;
   final String userId;
 
@@ -14,92 +14,27 @@ class Reserva {
     required this.id,
     required this.nombre,
     required this.fechaHora,
-    required this.imageUrl, // Asegúrate de incluir la URL de la imagen aquí
+    required this.imageUrl,
     required this.hora,
     required this.userId,
   });
 }
 
-class ReservasScreen extends StatefulWidget {
+class ReservasScreen extends StatelessWidget {
   const ReservasScreen({super.key});
 
   @override
-  _ReservasScreenState createState() => _ReservasScreenState();
-}
-
-class _ReservasScreenState extends State<ReservasScreen> {
-  List<Reserva> filteredReservas = [];
-  bool isLoading = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadReservas();
-  }
-
-  // Función para cargar las reservas desde Firestore
-  Future<void> _loadReservas() async {
-    try {
-      // Obtener las reservas del usuario desde Firestore
-      List<Reserva> reservas = await FirestoreService().getUserReservations();
-
-      setState(() {
-        filteredReservas = reservas;
-        isLoading = false;
-      });
-    } catch (e) {
-      print("Error al cargar las reservas: $e");
-      setState(() {
-        isLoading = false;
-      });
-    }
-  }
-
-  // Función para cancelar una reserva
-  void _cancelReserva(String reservaId) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Cancelar Reserva'),
-          content: const Text(
-            '¿Estás seguro de que deseas cancelar esta reserva?',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context); // Cierra el diálogo sin hacer nada
-              },
-              child: const Text('No'),
-            ),
-            TextButton(
-              onPressed: () async {
-                // Cancelar la reserva en Firestore
-                await FirestoreService().cancelReservation(reservaId);
-                setState(() {
-                  filteredReservas.removeWhere(
-                    (reserva) => reserva.id == reservaId,
-                  );
-                });
-                Navigator.pop(context); // Cierra el diálogo después de cancelar
-              },
-              child: const Text('Sí'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  @override
   Widget build(BuildContext context) {
+    final service = FirestoreService();
+
     return Scaffold(
+      appBar: AppBar(title: const Text('Mis Reservas')),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Column(
             children: [
-              // Campo de búsqueda
+              // Campo de búsqueda (sin lógica de filtrado por simplicidad)
               TextField(
                 decoration: InputDecoration(
                   hintText: 'Buscar reservas...',
@@ -113,27 +48,60 @@ class _ReservasScreenState extends State<ReservasScreen> {
                 ),
               ),
               const SizedBox(height: 20),
-
-              // Mostrar estado de carga o lista de reservas
-              isLoading
-                  ? const Center(child: CircularProgressIndicator())
-                  : filteredReservas.isEmpty
-                  ? const Center(child: Text('No se encontraron reservas'))
-                  : Expanded(
-                      child: ListView.builder(
-                        itemCount: filteredReservas.length,
-                        itemBuilder: (context, index) {
-                          final reserva = filteredReservas[index];
-                          return ReservaCard(
-                            reserva: reserva,
-                            onCancel: () {
-                              // Llamar al método de cancelación al tocar el ícono de cancelación
-                              _cancelReserva(reserva.id);
-                            },
-                          );
-                        },
-                      ),
-                    ),
+              Expanded(
+                child: StreamBuilder<List<Reserva>>(
+                  stream: service.streamUserReservations(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+                    if (snapshot.hasError) {
+                      return Center(child: Text('Error: ${snapshot.error}'));
+                    }
+                    final reservas = snapshot.data ?? [];
+                    if (reservas.isEmpty) {
+                      return const Center(
+                        child: Text('No se encontraron reservas'),
+                      );
+                    }
+                    return ListView.builder(
+                      itemCount: reservas.length,
+                      itemBuilder: (context, index) {
+                        final r = reservas[index];
+                        return ReservaCard(
+                          reserva: r,
+                          onCancel: () async {
+                            final confirm = await showDialog<bool>(
+                              context: context,
+                              builder: (ctx) => AlertDialog(
+                                title: const Text('Cancelar Reserva'),
+                                content: const Text(
+                                  '¿Estás seguro de cancelar esta reserva?',
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () =>
+                                        Navigator.of(ctx).pop(false),
+                                    child: const Text('No'),
+                                  ),
+                                  TextButton(
+                                    onPressed: () =>
+                                        Navigator.of(ctx).pop(true),
+                                    child: const Text('Sí'),
+                                  ),
+                                ],
+                              ),
+                            );
+                            if (confirm == true) {
+                              await FirestoreService().cancelReservation(r.id);
+                            }
+                          },
+                        );
+                      },
+                    );
+                  },
+                ),
+              ),
             ],
           ),
         ),
@@ -145,7 +113,6 @@ class _ReservasScreenState extends State<ReservasScreen> {
 class ReservaCard extends StatelessWidget {
   final Reserva reserva;
   final Function() onCancel;
-
   const ReservaCard({super.key, required this.reserva, required this.onCancel});
 
   @override
@@ -156,13 +123,11 @@ class ReservaCard extends StatelessWidget {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
-        onTap: () {},
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Imagen del lugar (imagen URL)
               ClipRRect(
                 borderRadius: BorderRadius.circular(8),
                 child: Container(
@@ -175,31 +140,10 @@ class ReservaCard extends StatelessWidget {
                           size: 40,
                           color: Colors.grey[600],
                         )
-                      : Image.network(
-                          reserva.imageUrl,
-                          fit: BoxFit.cover,
-                          loadingBuilder: (context, child, loadingProgress) {
-                            if (loadingProgress == null) {
-                              return child;
-                            } else {
-                              return Center(
-                                child: CircularProgressIndicator(
-                                  value:
-                                      loadingProgress.expectedTotalBytes != null
-                                      ? loadingProgress.cumulativeBytesLoaded /
-                                            (loadingProgress
-                                                    .expectedTotalBytes ??
-                                                1)
-                                      : null,
-                                ),
-                              );
-                            }
-                          },
-                        ),
+                      : Image.network(reserva.imageUrl, fit: BoxFit.cover),
                 ),
               ),
               const SizedBox(width: 16),
-              // Información de la reserva
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../sport_filters/widgets/styles.dart';
 import '../Reservas/reservation_screen.dart';
-import 'package:proyecto_devsouls/services/FirebaseFirestore.dart'; // Asegúrate de importar FirestoreService
+import 'package:proyecto_devsouls/services/firebase_firestore.dart'; // Asegúrate de importar FirestoreService
 import 'package:proyecto_devsouls/models/sports_venue.dart'; // Importa el modelo
 
 class VenuesBySportScreen extends StatefulWidget {
@@ -208,14 +208,10 @@ class _VenuesBySportScreenState extends State<VenuesBySportScreen> {
                     const SizedBox(height: 4),
                     Row(
                       children: [
-                        Icon(
-                          Icons.directions_walk,
-                          size: 16,
-                          color: Colors.grey[600],
-                        ),
+                        Icon(Icons.star, size: 16, color: Colors.amber),
                         const SizedBox(width: 4),
                         Text(
-                          'Distancia: ${venue.pricePerHour}', // Puedes cambiar "distancia" por algo relacionado con el precio si es necesario
+                          '${venue.rating} (${venue.reviewCount} reseñas)',
                           style: TextStyle(
                             fontSize: 14,
                             color: Colors.grey[600],
@@ -225,7 +221,7 @@ class _VenuesBySportScreenState extends State<VenuesBySportScreen> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'L. ${venue.pricePerHour.toString()}', // Aquí agregas la "L." antes del precio
+                      'L. ${venue.pricePerHour.toStringAsFixed(2)} /hora',
                       style: TextStyle(
                         fontSize: 14,
                         color: AppColors.primaryColor,
@@ -262,15 +258,24 @@ class _VenuesBySportScreenState extends State<VenuesBySportScreen> {
             const SizedBox(height: 16),
             _buildDetailRow(Icons.location_on, 'Dirección', venue.location),
             _buildDetailRow(
-              Icons.directions_walk,
-              'Distancia',
-              venue.pricePerHour.toString(),
+              Icons.star,
+              'Calificación',
+              '${venue.rating}/5 (${venue.reviewCount} reseñas)',
             ),
-            _buildDetailRow(Icons.star, 'Calificación', '${venue.rating}/5'),
             _buildDetailRow(
               Icons.attach_money,
               'Precio',
-              venue.pricePerHour.toString(),
+              'L. ${venue.pricePerHour.toStringAsFixed(2)} por hora',
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Descripción',
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              venue.description,
+              style: TextStyle(fontSize: 14, color: Colors.grey[700]),
             ),
             const SizedBox(height: 24),
             SizedBox(
@@ -281,7 +286,10 @@ class _VenuesBySportScreenState extends State<VenuesBySportScreen> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) => ReservationScreen(venueName: venue.name),
+                      builder: (_) => ReservationScreen(
+                        venueName: venue.name,
+                        pricePerHour: venue.pricePerHour,
+                      ),
                     ),
                   );
                 },

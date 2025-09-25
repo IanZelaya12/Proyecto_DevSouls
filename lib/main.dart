@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:proyecto_devsouls/services/FirebaseFirestore.dart'; // Importa el servicio de Firestore
+import 'package:proyecto_devsouls/services/firebase_firestore.dart'; // Importa el servicio de Firestore
 import 'package:proyecto_devsouls/data/sports_data.dart'; // Importa los datos de las canchas
 import 'screens/login/login.dart';
 import 'screens/register/register.dart';

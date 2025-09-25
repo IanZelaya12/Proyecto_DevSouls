@@ -1,14 +1,20 @@
+// lib/screens/Reservation/reservation_screen.dart
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart'; // Para obtener el ID del usuario
+import 'package:firebase_auth/firebase_auth.dart';
 import '../sport_filters/widgets/styles.dart';
 import '../payment/checkout_screen.dart';
 import '../Reservas/reservas.dart';
-import 'package:proyecto_devsouls/services/FirebaseFirestore.dart'; // Para Firestore
+import 'package:proyecto_devsouls/services/firebase_firestore.dart';
 
 class ReservationScreen extends StatefulWidget {
   final String venueName;
+  final double pricePerHour;
 
-  const ReservationScreen({super.key, required this.venueName});
+  const ReservationScreen({
+    super.key,
+    required this.venueName,
+    required this.pricePerHour,
+  });
 
   @override
   State<ReservationScreen> createState() => _ReservationScreenState();
@@ -18,7 +24,6 @@ class _ReservationScreenState extends State<ReservationScreen> {
   DateTime? selectedDate;
   TimeOfDay? selectedTime;
 
-  // Mostrar selector de fecha
   Future<void> _pickDate() async {
     final DateTime now = DateTime.now();
     final DateTime? picked = await showDatePicker(
@@ -27,27 +32,18 @@ class _ReservationScreenState extends State<ReservationScreen> {
       firstDate: now,
       lastDate: DateTime(now.year + 1),
     );
-
-    if (picked != null && picked != selectedDate) {
-      setState(() {
-        selectedDate = picked;
-      });
-    }
+    if (picked != null && picked != selectedDate)
+      setState(() => selectedDate = picked);
   }
 
-  // Mostrar selector de hora
   Future<void> _pickTime() async {
     final TimeOfDay now = TimeOfDay.now();
     final TimeOfDay? picked = await showTimePicker(
       context: context,
       initialTime: now,
     );
-
-    if (picked != null && picked != selectedTime) {
-      setState(() {
-        selectedTime = picked;
-      });
-    }
+    if (picked != null && picked != selectedTime)
+      setState(() => selectedTime = picked);
   }
 
   @override
@@ -76,14 +72,21 @@ class _ReservationScreenState extends State<ReservationScreen> {
               widget.venueName,
               style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
+            const SizedBox(height: 8),
+            Text(
+              "Precio: L. ${widget.pricePerHour.toStringAsFixed(2)} por hora",
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: AppColors.primaryColor,
+              ),
+            ),
             const SizedBox(height: 24),
             Text(
               "Selecciona fecha y hora",
               style: TextStyle(fontSize: 16, color: Colors.grey[700]),
             ),
             const SizedBox(height: 16),
-
-            // Botón seleccionar fecha
             ListTile(
               leading: const Icon(Icons.calendar_today),
               title: Text(
@@ -93,8 +96,6 @@ class _ReservationScreenState extends State<ReservationScreen> {
               ),
               onTap: _pickDate,
             ),
-
-            // Botón seleccionar hora
             ListTile(
               leading: const Icon(Icons.access_time),
               title: Text(
@@ -104,10 +105,7 @@ class _ReservationScreenState extends State<ReservationScreen> {
               ),
               onTap: _pickTime,
             ),
-
             const Spacer(),
-
-            // Botón continuar al pago
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
@@ -121,7 +119,6 @@ class _ReservationScreenState extends State<ReservationScreen> {
                     return;
                   }
 
-                  // Generar fecha/hora combinada
                   final DateTime reservationDateTime = DateTime(
                     selectedDate!.year,
                     selectedDate!.month,
@@ -130,36 +127,52 @@ class _ReservationScreenState extends State<ReservationScreen> {
                     selectedTime!.minute,
                   );
 
-                  // Obtener el userId del usuario autenticado
                   final String userId = FirebaseAuth.instance.currentUser!.uid;
 
-                  // Crear una nueva reserva
                   final newReserva = Reserva(
-                    id: '', // Deja vacío, Firestore generará un ID automáticamente
-                    nombre: widget.venueName, // Nombre del lugar de la reserva
+                    id: '',
+                    nombre: widget.venueName,
                     fechaHora:
-                        '${reservationDateTime.day}/${reservationDateTime.month}/${reservationDateTime.year} a las ${reservationDateTime.hour}:${reservationDateTime.minute.toString().padLeft(2, '0')}', // Fecha y hora
-                    imageUrl:
-                        '', // Aquí puedes agregar la URL de la imagen si es necesario
+                        '${reservationDateTime.day}/${reservationDateTime.month}/${reservationDateTime.year} a las ${reservationDateTime.hour}:${reservationDateTime.minute.toString().padLeft(2, '0')}',
+                    imageUrl: '',
                     hora:
                         '${reservationDateTime.hour}:${reservationDateTime.minute.toString().padLeft(2, '0')}',
-                    userId: userId, // ID del usuario
+                    userId: userId,
                   );
 
-                  // Agregar la reserva a Firestore
-                  FirestoreService firestoreService = FirestoreService();
-                  await firestoreService.addReservation(
-                    newReserva,
-                  ); // Método para agregar la reserva
-
-                  // Regresar a ReservasScreen con la nueva reserva
-                  Navigator.pushReplacement(
+                  // Navegar al checkout y esperar el id de la reserva creado
+                  final result = await Navigator.push<String>(
                     context,
                     MaterialPageRoute(
-                      builder: (_) =>
-                          ReservasScreen(), // Esto reinicia la pantalla de reservas para mostrar la nueva lista
+                      builder: (context) => CheckoutScreen(
+                        reservationId:
+                            'temp_${DateTime.now().millisecondsSinceEpoch}',
+                        amountCents: (widget.pricePerHour * 100).toInt(),
+                        courtName: widget.venueName,
+                        currency: 'HNL',
+                        selectedDate:
+                            '${reservationDateTime.day}/${reservationDateTime.month}/${reservationDateTime.year}',
+                        selectedTime:
+                            '${reservationDateTime.hour}:${reservationDateTime.minute.toString().padLeft(2, '0')}',
+                      ),
                     ),
                   );
+
+                  // Si retorna un id de reserva, redirigimos a la pantalla de reservas.
+                  if (result != null && result.isNotEmpty) {
+                    // La pantalla Reservas usa StreamBuilder y mostrará la nueva reserva automáticamente.
+                    Navigator.of(context).pushAndRemoveUntil(
+                      MaterialPageRoute(builder: (_) => const ReservasScreen()),
+                      (route) => false,
+                    );
+                  } else {
+                    // Si no se creó la reserva (usuario canceló o error), notificar.
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('No se completó la reserva.'),
+                      ),
+                    );
+                  }
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primaryColor,

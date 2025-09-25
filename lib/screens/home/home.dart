@@ -4,7 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:proyecto_devsouls/models/court_model.dart'; // Importamos el modelo Court
 import 'package:proyecto_devsouls/models/sports_venue.dart';
-import 'package:proyecto_devsouls/services/FirebaseFirestore.dart';
+import 'package:proyecto_devsouls/services/firebase_firestore.dart';
 import 'widgets/styles.dart';
 import 'widgets/featured_court_card.dart';
 import 'widgets/recent_court_list_item.dart';

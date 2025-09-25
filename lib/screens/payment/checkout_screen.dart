@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:flutter/services.dart';
 import 'payment_success_screen.dart';
 import '../Perfil/editar_perfil.dart';
+import '../Reservas/reservas.dart'; // Importar ReservasScreen
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 enum PaymentMethodType { stripeCard, paypal, applePay }
@@ -14,6 +15,8 @@ class CheckoutScreen extends StatefulWidget {
   final int amountCents;
   final String currency; // 'HNL', etc.
   final String courtName;
+  final String? selectedDate; // Agregar fecha
+  final String? selectedTime; // Agregar hora
 
   const CheckoutScreen({
     super.key,
@@ -21,6 +24,8 @@ class CheckoutScreen extends StatefulWidget {
     required this.amountCents,
     required this.courtName,
     this.currency = 'HNL',
+    this.selectedDate,
+    this.selectedTime,
   });
 
   @override
@@ -239,12 +244,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     // throw Exception('Apple Pay no disponible en este dispositivo.');
   }
 
-  // Registrar el pago exitoso en Firestore
+  // Registrar el pago exitoso y crear la reserva en Firestore
   Future<void> _recordPaymentInFirestore() async {
     final uid = _auth.currentUser!.uid;
 
     try {
-      // Crear registro del pago
+      // 1. Crear registro del pago
       await _db.collection('payments').add({
         'userId': uid,
         'reservationId': widget.reservationId,
@@ -256,17 +261,33 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         'createdAt': FieldValue.serverTimestamp(),
       });
 
-      // Actualizar la reserva como pagada
-      await _db.collection('reservations').doc(widget.reservationId).update({
+      // 2. Crear la reserva después del pago exitoso
+      String fechaHora = 'Pendiente de confirmar';
+      String hora = 'Pendiente';
+
+      if (widget.selectedDate != null && widget.selectedTime != null) {
+        fechaHora = '${widget.selectedDate} a las ${widget.selectedTime}';
+        hora = widget.selectedTime!;
+      }
+
+      await _db.collection('reservations').add({
+        'userId': uid,
+        'nombre': widget.courtName, // Nombre del lugar
+        'courtName': widget.courtName,
+        'amount': widget.amountCents,
+        'currency': widget.currency,
+        'fechaHora': fechaHora,
+        'hora': hora,
+        'imageUrl': '', // Se puede agregar después
         'paymentStatus': 'paid',
-        'paymentCompletedAt': FieldValue.serverTimestamp(),
+        'status': 'confirmed',
         'paymentMethod': _method.toString().split('.').last,
+        'createdAt': FieldValue.serverTimestamp(),
       });
 
-      print('Pago registrado exitosamente en Firestore');
+      print('Pago y reserva registrados exitosamente en Firestore');
     } catch (e) {
-      print('Error registrando pago: $e');
-      // Lanzamos para que el llamador (processPayment) pueda informar claramente
+      print('Error registrando pago y reserva: $e');
       throw Exception('No se pudo registrar el pago en la base de datos: $e');
     }
   }
@@ -343,8 +364,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     );
   }
 
+  // Actualizado para navegar a ReservasScreen
   void _goHome() {
-    Navigator.of(context).pushNamedAndRemoveUntil('home', (route) => false);
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (context) => const ReservasScreen()),
+      (route) => false,
+    );
   }
 
   Future<void> _showPaymentNotification(
@@ -456,6 +481,16 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                 'Cancha: ${widget.courtName}',
                                 style: theme.textTheme.bodyMedium,
                               ),
+                              if (widget.selectedDate != null &&
+                                  widget.selectedTime != null) ...[
+                                const SizedBox(height: 4),
+                                Text(
+                                  '${widget.selectedDate} a las ${widget.selectedTime}',
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                    color: theme.colorScheme.primary,
+                                  ),
+                                ),
+                              ],
                             ],
                           ),
                         ),
