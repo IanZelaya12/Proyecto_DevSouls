@@ -1,6 +1,7 @@
 import 'package:proyecto_devsouls/models/sports_venue.dart';
 
 class Court {
+  final String id;
   final String name;
   final String sport;
   final String location;
@@ -12,6 +13,7 @@ class Court {
   final List<String> facilities;
 
   Court({
+    required this.id,
     required this.name,
     required this.sport,
     required this.location,
@@ -26,6 +28,7 @@ class Court {
   // Método para convertir SportsVenue a Court
   factory Court.fromSportsVenue(SportsVenue venue) {
     return Court(
+      id: venue.id,
       name: venue.name,
       sport: venue.sport,
       location: venue.location,

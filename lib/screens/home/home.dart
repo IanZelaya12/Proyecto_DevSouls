@@ -1,4 +1,4 @@
-// home.dart
+import 'package:cloud_firestore/cloud_firestore.dart'; // Importamos Firestore
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -12,7 +12,7 @@ import '../sport_filters/sports_filter_screen.dart';
 import '../Reservas/reservas.dart';
 import '../Perfil/perfil.dart';
 import '../Mapa/mapa.dart';
-import 'courtdetalles.dart';
+import 'courtdetalles.dart'; // Importamos la pantalla de detalles de cancha
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -30,12 +30,15 @@ class _HomeScreenState extends State<HomeScreen> {
   final PageController _pageController = PageController();
 
   List<Court> courts = [];
+  List<Court> recentCourts =
+      []; // Lista para almacenar las canchas vistas recientemente
 
   @override
   void initState() {
     super.initState();
     _checkAuthentication();
     _loadVenues(); // Cargar los datos desde Firestore
+    _loadRecentCourts(); // Cargar vistas recientes
   }
 
   void _checkAuthentication() async {
@@ -49,6 +52,7 @@ class _HomeScreenState extends State<HomeScreen> {
         this.user = user;
         _isLoading = false;
       });
+      _loadRecentCourts(); // Cargar vistas recientes del usuario
     }
   }
 
@@ -66,6 +70,50 @@ class _HomeScreenState extends State<HomeScreen> {
     } catch (e) {
       print("Error al cargar los lugares deportivos: $e");
     }
+  }
+
+  // Cargar vistas recientes desde Firestore
+  Future<void> _loadRecentCourts() async {
+    if (user == null) return; // Asegúrate de que el usuario está autenticado
+    final userRef = FirebaseFirestore.instance
+        .collection('users')
+        .doc(user!.uid);
+    final snapshot = await userRef.get();
+    if (snapshot.exists) {
+      final data = snapshot.data() as Map<String, dynamic>;
+      if (data['recentViews'] != null) {
+        List<String> recentCourtIds = List<String>.from(data['recentViews']);
+        setState(() {
+          recentCourts = recentCourtIds
+              .map((id) => courts.firstWhere((court) => court.id == id))
+              .toList();
+        });
+      }
+    }
+  }
+
+  // Función para manejar la selección de una cancha y agregarla a las vistas recientes
+  Future<void> _onCourtSelected(Court court) async {
+    if (user == null) return; // Asegúrate de que el usuario está autenticado
+    setState(() {
+      if (!recentCourts.contains(court)) {
+        recentCourts.add(
+          court,
+        ); // Agregar la cancha seleccionada a las vistas recientes
+      }
+    });
+
+    // Guardar la cancha en Firestore
+    final userRef = FirebaseFirestore.instance
+        .collection('users')
+        .doc(user!.uid);
+    List<String> recentCourtIds = recentCourts
+        .map((court) => court.id)
+        .toList();
+    userRef.update({
+      'recentViews':
+          recentCourtIds, // Guardamos el campo recentViews con los IDs
+    });
   }
 
   void _onItemTapped(int index) {
@@ -125,9 +173,15 @@ class _HomeScreenState extends State<HomeScreen> {
                         searchQuery = query;
                       });
                     },
+                    onCourtSelected: (court) {
+                      _onCourtSelected(
+                        court,
+                      ); // Llamada para agregar la cancha a vistas recientes
+                    },
                     courts: _filterCourtsBySport(
                       _searchCourts(courts),
                     ), // Filtrar los courts antes de pasarlos
+                    recentCourts: recentCourts, // Pasamos las canchas recientes
                   ),
                   MapaScreen(),
                   SportsFilterScreen(),
@@ -168,12 +222,17 @@ class _HomeScreenState extends State<HomeScreen> {
 class _HomePageContent extends StatelessWidget {
   final Function(String) onSportSelected;
   final Function(String) onSearch;
+  final Function(Court)
+  onCourtSelected; // Ahora recibimos la función para manejar la selección de cancha
   final List<Court> courts; // Lista de canchas filtradas
+  final List<Court> recentCourts; // Lista de vistas recientes
 
   const _HomePageContent({
     required this.onSportSelected,
     required this.onSearch,
-    required this.courts, // Recibimos la lista de canchas
+    required this.onCourtSelected,
+    required this.courts,
+    required this.recentCourts, // Recibimos las vistas recientes
   });
 
   @override
@@ -250,13 +309,65 @@ class _HomePageContent extends StatelessWidget {
                 itemBuilder: (context, index) {
                   return GestureDetector(
                     onTap: () {
-                      // Eliminar funcionalidad de vistas recientes
+                      // Navegar a la pantalla de detalles de la cancha
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              CourtDetailScreen(courtId: courts[index].id),
+                        ),
+                      ).then((_) {
+                        // Cuando regresa, agregamos la cancha a las vistas recientes
+                        onCourtSelected(courts[index]);
+                      });
                     },
                     child: FeaturedCourtCard(court: courts[index]),
                   );
                 },
               ),
             ),
+
+            const SizedBox(height: 20),
+
+            // Sección de Vistas Recientes
+            if (recentCourts.isNotEmpty) ...[
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Vistas recientes',
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              // Mostrar vistas recientes
+              ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: recentCourts.length, // Usamos recentCourts aquí
+                itemBuilder: (context, index) {
+                  return GestureDetector(
+                    onTap: () {
+                      // Navegar a la pantalla de detalles de la cancha
+                      // En HomeScreen, modifica el código donde navegas a CourtDetailScreen
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => CourtDetailScreen(
+                            courtId: courts[index].id,
+                          ), // Solo pasamos el ID de la cancha
+                        ),
+                      );
+                    },
+                    child: RecentCourtListItem(
+                      court:
+                          recentCourts[index], // Usamos la cancha de las vistas recientes
+                    ),
+                  );
+                },
+              ),
+            ],
           ],
         ),
       ),
@@ -295,91 +406,6 @@ class _HomePageContent extends StatelessWidget {
               borderRadius: BorderRadius.circular(20),
             ),
           ),
-          ChoiceChip(
-            label: Text('Yoga'),
-            selected: false,
-            onSelected: (selected) {
-              onSportSelected('yoga');
-            },
-            backgroundColor: Colors.white,
-            selectedColor: Colors.green.shade100,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-            ),
-          ),
-          ChoiceChip(
-            label: Text('Hip Hop'),
-            selected: false,
-            onSelected: (selected) {
-              onSportSelected('hip hop');
-            },
-            backgroundColor: Colors.white,
-            selectedColor: Colors.green.shade100,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-            ),
-          ),
-          ChoiceChip(
-            label: Text('Natación'),
-            selected: false,
-            onSelected: (selected) {
-              onSportSelected('natación');
-            },
-            backgroundColor: Colors.white,
-            selectedColor: Colors.green.shade100,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-            ),
-          ),
-          ChoiceChip(
-            label: Text('Basketball'),
-            selected: false,
-            onSelected: (selected) {
-              onSportSelected('basketball');
-            },
-            backgroundColor: Colors.white,
-            selectedColor: Colors.green.shade100,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-            ),
-          ),
-          ChoiceChip(
-            label: Text('Calistenia'),
-            selected: false,
-            onSelected: (selected) {
-              onSportSelected('calistenia');
-            },
-            backgroundColor: Colors.white,
-            selectedColor: Colors.green.shade100,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-            ),
-          ),
-          ChoiceChip(
-            label: Text('Gimnasia'),
-            selected: false,
-            onSelected: (selected) {
-              onSportSelected('gimnasia');
-            },
-            backgroundColor: Colors.white,
-            selectedColor: Colors.green.shade100,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-            ),
-          ),
-          ChoiceChip(
-            label: Text('Voleibol'),
-            selected: false,
-            onSelected: (selected) {
-              onSportSelected('voleibol');
-            },
-            backgroundColor: Colors.white,
-            selectedColor: Colors.green.shade100,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-            ),
-          ),
-
           // Más ChoiceChips según tus deportes...
         ],
       ),
