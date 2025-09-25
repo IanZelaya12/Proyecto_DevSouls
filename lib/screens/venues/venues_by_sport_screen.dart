@@ -1,7 +1,8 @@
-// lib/screens/venues/venues_by_sport_screen.dart
 import 'package:flutter/material.dart';
 import '../sport_filters/widgets/styles.dart';
 import '../Reservas/reservation_screen.dart';
+import 'package:proyecto_devsouls/services/FirebaseFirestore.dart'; // Asegúrate de importar FirestoreService
+import 'package:proyecto_devsouls/models/sports_venue.dart'; // Importa el modelo
 
 class VenuesBySportScreen extends StatefulWidget {
   final String sportName;
@@ -18,7 +19,7 @@ class VenuesBySportScreen extends StatefulWidget {
 }
 
 class _VenuesBySportScreenState extends State<VenuesBySportScreen> {
-  List<VenueData> venues = [];
+  List<SportsVenue> venues = [];
   bool isLoading = true;
 
   @override
@@ -27,44 +28,22 @@ class _VenuesBySportScreenState extends State<VenuesBySportScreen> {
     _loadVenues();
   }
 
-  void _loadVenues() {
-    // Simulación de carga de datos - aquí conectarías con Firestore
-    Future.delayed(const Duration(seconds: 2), () {
+  // Cargar los lugares deportivos desde Firestore
+  void _loadVenues() async {
+    try {
+      // Obtener los lugares deportivos de Firestore
+      List<SportsVenue> fetchedVenues = await FirestoreService()
+          .getSportsVenuesBySport(widget.sportName);
       setState(() {
-        venues = _getMockVenues();
+        venues = fetchedVenues;
         isLoading = false;
       });
-    });
-  }
-
-  List<VenueData> _getMockVenues() {
-    // Datos de ejemplo - reemplaza con datos reales de Firestore
-    return [
-      VenueData(
-        name: 'Centro Deportivo Los Olivos',
-        address: 'Av. Principal 123, Tegucigalpa',
-        distance: '2.5 km',
-        rating: 4.5,
-        priceRange: 'L. 150-300',
-        imageUrl: 'assets/img/fut1.jpg',
-      ),
-      VenueData(
-        name: 'Complejo Deportivo El Salvador',
-        address: 'Col. El Salvador, Comayagüela',
-        distance: '4.2 km',
-        rating: 4.2,
-        priceRange: 'L. 200-400',
-        imageUrl: 'assets/img/fut2.jpg',
-      ),
-      VenueData(
-        name: 'Polideportivo San Rafael',
-        address: 'Res. San Rafael, Tegucigalpa',
-        distance: '6.1 km',
-        rating: 4.0,
-        priceRange: 'L. 100-250',
-        imageUrl: 'assets/img/fut1.jpg',
-      ),
-    ];
+    } catch (e) {
+      print("Error al cargar los lugares: $e");
+      setState(() {
+        isLoading = false;
+      });
+    }
   }
 
   @override
@@ -163,7 +142,7 @@ class _VenuesBySportScreenState extends State<VenuesBySportScreen> {
     );
   }
 
-  Widget _buildVenueCard(VenueData venue) {
+  Widget _buildVenueCard(SportsVenue venue) {
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
       elevation: 4,
@@ -185,11 +164,7 @@ class _VenuesBySportScreenState extends State<VenuesBySportScreen> {
                   width: 80,
                   height: 80,
                   color: Colors.grey[300],
-                  child: Icon(
-                    Icons.location_city,
-                    size: 40,
-                    color: Colors.grey[600],
-                  ),
+                  child: Image.network(venue.imageUrl, fit: BoxFit.cover),
                 ),
               ),
               const SizedBox(width: 16),
@@ -219,7 +194,7 @@ class _VenuesBySportScreenState extends State<VenuesBySportScreen> {
                         const SizedBox(width: 4),
                         Expanded(
                           child: Text(
-                            venue.address,
+                            venue.location,
                             style: TextStyle(
                               fontSize: 14,
                               color: Colors.grey[600],
@@ -240,27 +215,17 @@ class _VenuesBySportScreenState extends State<VenuesBySportScreen> {
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          venue.distance,
+                          'Distancia: ${venue.pricePerHour}', // Puedes cambiar "distancia" por algo relacionado con el precio si es necesario
                           style: TextStyle(
                             fontSize: 14,
                             color: Colors.grey[600],
-                          ),
-                        ),
-                        const Spacer(),
-                        Icon(Icons.star, size: 16, color: Colors.amber),
-                        const SizedBox(width: 4),
-                        Text(
-                          venue.rating.toString(),
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
                           ),
                         ),
                       ],
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      venue.priceRange,
+                      'L. ${venue.pricePerHour.toString()}', // Aquí agregas la "L." antes del precio
                       style: TextStyle(
                         fontSize: 14,
                         color: AppColors.primaryColor,
@@ -277,7 +242,7 @@ class _VenuesBySportScreenState extends State<VenuesBySportScreen> {
     );
   }
 
-  void _showVenueDetails(VenueData venue) {
+  void _showVenueDetails(SportsVenue venue) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -295,10 +260,18 @@ class _VenuesBySportScreenState extends State<VenuesBySportScreen> {
               style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
-            _buildDetailRow(Icons.location_on, 'Dirección', venue.address),
-            _buildDetailRow(Icons.directions_walk, 'Distancia', venue.distance),
+            _buildDetailRow(Icons.location_on, 'Dirección', venue.location),
+            _buildDetailRow(
+              Icons.directions_walk,
+              'Distancia',
+              venue.pricePerHour.toString(),
+            ),
             _buildDetailRow(Icons.star, 'Calificación', '${venue.rating}/5'),
-            _buildDetailRow(Icons.attach_money, 'Precio', venue.priceRange),
+            _buildDetailRow(
+              Icons.attach_money,
+              'Precio',
+              venue.pricePerHour.toString(),
+            ),
             const SizedBox(height: 24),
             SizedBox(
               width: double.infinity,
@@ -353,22 +326,4 @@ class _VenuesBySportScreenState extends State<VenuesBySportScreen> {
       ),
     );
   }
-}
-
-class VenueData {
-  final String name;
-  final String address;
-  final String distance;
-  final double rating;
-  final String priceRange;
-  final String imageUrl;
-
-  VenueData({
-    required this.name,
-    required this.address,
-    required this.distance,
-    required this.rating,
-    required this.priceRange,
-    required this.imageUrl,
-  });
 }

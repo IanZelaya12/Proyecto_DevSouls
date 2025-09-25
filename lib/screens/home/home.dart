@@ -27,7 +27,6 @@ class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
   String selectedSport = '';
   String searchQuery = '';
-  bool showRecentViews = false; // Para mostrar u ocultar las vistas recientes
   final PageController _pageController = PageController();
 
   List<Court> courts = [];
@@ -126,13 +125,6 @@ class _HomeScreenState extends State<HomeScreen> {
                         searchQuery = query;
                       });
                     },
-                    onCourtSelected: () {
-                      setState(() {
-                        showRecentViews =
-                            true; // Al seleccionar una cancha, mostramos las vistas recientes
-                      });
-                    },
-                    showRecentViews: showRecentViews,
                     courts: _filterCourtsBySport(
                       _searchCourts(courts),
                     ), // Filtrar los courts antes de pasarlos
@@ -176,15 +168,11 @@ class _HomeScreenState extends State<HomeScreen> {
 class _HomePageContent extends StatelessWidget {
   final Function(String) onSportSelected;
   final Function(String) onSearch;
-  final Function() onCourtSelected;
-  final bool showRecentViews;
   final List<Court> courts; // Lista de canchas filtradas
 
   const _HomePageContent({
     required this.onSportSelected,
     required this.onSearch,
-    required this.onCourtSelected,
-    required this.showRecentViews,
     required this.courts, // Recibimos la lista de canchas
   });
 
@@ -255,49 +243,20 @@ class _HomePageContent extends StatelessWidget {
 
             // Carrusel de canchas destacadas
             SizedBox(
-              height: 250,
+              height: 300, // Altura mayor para imágenes más grandes
               child: ListView.builder(
                 scrollDirection: Axis.horizontal,
-                itemCount: courts.length, // Usamos courts en vez de dummyCourts
+                itemCount: courts.length,
                 itemBuilder: (context, index) {
                   return GestureDetector(
                     onTap: () {
-                      onCourtSelected(); // Muestra las vistas recientes al seleccionar una cancha
+                      // Eliminar funcionalidad de vistas recientes
                     },
-                    child: FeaturedCourtCard(
-                      court: courts[index],
-                    ), // Usamos court en vez de dummyCourts
+                    child: FeaturedCourtCard(court: courts[index]),
                   );
                 },
               ),
             ),
-
-            const SizedBox(height: 20),
-
-            // Mostrar vistas recientes si ya se seleccionó una cancha
-            if (showRecentViews) ...[
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Vistas recientes',
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
-                ],
-              ),
-              const SizedBox(height: 10),
-              // Mostrar vistas recientes
-              ListView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: courts.length, // Usamos courts en vez de dummyCourts
-                itemBuilder: (context, index) {
-                  return RecentCourtListItem(
-                    court: courts[index],
-                  ); // Usamos court en vez de dummyCourts
-                },
-              ),
-            ],
           ],
         ),
       ),
@@ -329,18 +288,6 @@ class _HomePageContent extends StatelessWidget {
             selected: false,
             onSelected: (selected) {
               onSportSelected('fútbol');
-            },
-            backgroundColor: Colors.white,
-            selectedColor: Colors.green.shade100,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-            ),
-          ),
-          ChoiceChip(
-            label: Text('Tenis'),
-            selected: false,
-            onSelected: (selected) {
-              onSportSelected('tenis');
             },
             backgroundColor: Colors.white,
             selectedColor: Colors.green.shade100,
@@ -432,6 +379,8 @@ class _HomePageContent extends StatelessWidget {
               borderRadius: BorderRadius.circular(20),
             ),
           ),
+
+          // Más ChoiceChips según tus deportes...
         ],
       ),
     );

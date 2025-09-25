@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart'; // Para obtener el ID del usuario
 import '../sport_filters/widgets/styles.dart';
 import '../payment/checkout_screen.dart';
-import 'reservas.dart';
+import '../Reservas/reservas.dart';
+import 'package:proyecto_devsouls/services/FirebaseFirestore.dart'; // Para Firestore
 
 class ReservationScreen extends StatefulWidget {
   final String venueName;
@@ -109,7 +111,7 @@ class _ReservationScreenState extends State<ReservationScreen> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: () {
+                onPressed: () async {
                   if (selectedDate == null || selectedTime == null) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
@@ -128,16 +130,27 @@ class _ReservationScreenState extends State<ReservationScreen> {
                     selectedTime!.minute,
                   );
 
+                  // Obtener el userId del usuario autenticado
+                  final String userId = FirebaseAuth.instance.currentUser!.uid;
+
                   // Crear una nueva reserva
                   final newReserva = Reserva(
-                    widget.venueName, // Nombre del lugar de la reserva
-                    '${reservationDateTime.day}/${reservationDateTime.month}/${reservationDateTime.year} a las ${reservationDateTime.hour}:${reservationDateTime.minute.toString().padLeft(2, '0')}', // Fecha y hora
+                    id: '', // Deja vacío, Firestore generará un ID automáticamente
+                    nombre: widget.venueName, // Nombre del lugar de la reserva
+                    fechaHora:
+                        '${reservationDateTime.day}/${reservationDateTime.month}/${reservationDateTime.year} a las ${reservationDateTime.hour}:${reservationDateTime.minute.toString().padLeft(2, '0')}', // Fecha y hora
+                    imageUrl:
+                        '', // Aquí puedes agregar la URL de la imagen si es necesario
+                    hora:
+                        '${reservationDateTime.hour}:${reservationDateTime.minute.toString().padLeft(2, '0')}',
+                    userId: userId, // ID del usuario
                   );
 
-                  // Aquí agregas la nueva reserva a la lista de reservas
-                  setState(() {
-                    reservas.add(newReserva); // Actualiza la lista de reservas
-                  });
+                  // Agregar la reserva a Firestore
+                  FirestoreService firestoreService = FirestoreService();
+                  await firestoreService.addReservation(
+                    newReserva,
+                  ); // Método para agregar la reserva
 
                   // Regresar a ReservasScreen con la nueva reserva
                   Navigator.pushReplacement(
@@ -145,25 +158,6 @@ class _ReservationScreenState extends State<ReservationScreen> {
                     MaterialPageRoute(
                       builder: (_) =>
                           ReservasScreen(), // Esto reinicia la pantalla de reservas para mostrar la nueva lista
-                    ),
-                  );
-
-                  // Generar ID único de reserva
-                  final String reservationId =
-                      'RES-${DateTime.now().millisecondsSinceEpoch}';
-
-                  // Monto de ejemplo (puedes reemplazarlo por el real)
-                  const int amountCents = 15900; // equivale a L 159.00
-
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => CheckoutScreen(
-                        reservationId: reservationId,
-                        amountCents: amountCents,
-                        currency: 'HNL',
-                        courtName: widget.venueName,
-                      ),
                     ),
                   );
                 },

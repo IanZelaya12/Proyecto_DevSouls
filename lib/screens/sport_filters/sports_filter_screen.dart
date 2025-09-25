@@ -30,7 +30,7 @@ class _SportsFilterScreenState extends State<SportsFilterScreen> {
       SportData('Yoga', 'assets/img/yoga.png', Colors.pinkAccent),
       SportData('Fit Dance', 'assets/img/fit_dance.png', Colors.pink),
       SportData('Natación', 'assets/img/natacion.png', Colors.blueGrey),
-      SportData('Volei', 'assets/img/volei.png', Colors.orange),
+      SportData('Voleibol', 'assets/img/volei.png', Colors.orange),
       SportData('Basketball', 'assets/img/basketball.png', Colors.deepOrange),
       SportData('Gimnasia', 'assets/img/gimnasia.png', Colors.teal),
       SportData(

@@ -84,7 +84,7 @@ class PerfilScreen extends StatelessWidget {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (_) => const ProfileEditScreen(),
+                            builder: (_) => const EditPerfilScreen(),
                           ),
                         );
                       },

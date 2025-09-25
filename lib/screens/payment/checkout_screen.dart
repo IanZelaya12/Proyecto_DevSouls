@@ -131,16 +131,36 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     try {
       // Guardar información según el método de pago si el usuario lo solicitó
       if (_saveCardInfo) {
-        await _savePaymentInfoToFirestore();
+        try {
+          await _savePaymentInfoToFirestore();
+        } catch (e) {
+          // Mostrar pero seguir intentando procesar pago (opcionalmente podrías abortar)
+          await _showErrorDialog('Error guardando método', e.toString());
+        }
       }
 
       // Aquí integrarías con Stripe, PayPal, etc. según el método seleccionado
-      await _processPaymentByMethod();
+      try {
+        await _processPaymentByMethod();
+      } catch (e) {
+        // Si falla el procesamiento del proveedor, mostramos error y no registramos como pago
+        await _showErrorDialog('Error procesando pago', e.toString());
+        return;
+      }
 
       if (!mounted) return;
 
       // Registrar el pago en Firestore
-      await _recordPaymentInFirestore();
+      try {
+        await _recordPaymentInFirestore();
+      } catch (e) {
+        // El pago ya pudo haberse procesado exitosamente por el proveedor,
+        // pero hubo un error al registrar. Informamos al usuario y continuamos.
+        await _showErrorDialog(
+          'Pago procesado, fallo al registrar',
+          'El pago fue procesado pero ocurrió un error guardando el registro: $e',
+        );
+      }
 
       // Mostrar el diálogo de éxito
       await showDialog(
@@ -156,8 +176,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         widget.courtName,
       );
     } catch (e) {
-      _snack('Error al procesar el pago: $e');
+      // Errores inesperados generales
       print('Error en processPayment: $e');
+      await _showErrorDialog('Error', 'Ocurrió un error: $e');
     } finally {
       if (mounted) setState(() => _isPaying = false);
     }
@@ -185,21 +206,37 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     // Simulación - aquí usarías Stripe SDK
     await Future.delayed(const Duration(milliseconds: 800));
     print('Procesando pago con Stripe...');
-    // TODO: Implementar integración real con Stripe
+
+    // Ejemplo de validaciones extra antes de llamar al SDK
+    final number = _cardNumberController.text.replaceAll(' ', '');
+    if (number.length < 13) {
+      throw Exception('Número de tarjeta inválido.');
+    }
+    if (_expiryController.text.isEmpty) {
+      throw Exception('Fecha de vencimiento requerida.');
+    }
+    // TODO: Reemplaza por llamada real al SDK. Si el SDK retorna error,
+    // propaga la excepción con un mensaje descriptivo para mostrar al usuario.
   }
 
   Future<void> _processPayPalPayment() async {
-    // Simulación - aquí usarías PayPal SDK
+    // Simulación - aquí usarías PayPal SDK / redirección
     await Future.delayed(const Duration(milliseconds: 600));
     print('Procesando pago con PayPal...');
-    // TODO: Implementar integración real con PayPal
+
+    if (_paypalEmailController.text.isEmpty) {
+      throw Exception('Email de PayPal requerido.');
+    }
+    // Si la integración falla, lanza una excepción con mensaje legible.
   }
 
   Future<void> _processApplePayPayment() async {
     // Simulación - aquí usarías Apple Pay
     await Future.delayed(const Duration(milliseconds: 400));
     print('Procesando pago con Apple Pay...');
-    // TODO: Implementar integración real con Apple Pay
+
+    // Si la verificación del dispositivo falla:
+    // throw Exception('Apple Pay no disponible en este dispositivo.');
   }
 
   // Registrar el pago exitoso en Firestore
@@ -229,7 +266,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       print('Pago registrado exitosamente en Firestore');
     } catch (e) {
       print('Error registrando pago: $e');
-      // No mostramos error al usuario porque el pago ya se procesó
+      // Lanzamos para que el llamador (processPayment) pueda informar claramente
+      throw Exception('No se pudo registrar el pago en la base de datos: $e');
     }
   }
 
@@ -273,7 +311,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       print('Información de pago guardada exitosamente');
     } catch (e) {
       print('Error guardando información de pago: $e');
-      _snack('Error guardando información de pago');
+      // Lanzamos para que el llamador pueda decidir mostrar el error
+      throw Exception('No se pudo guardar la información de pago: $e');
     }
   }
 
@@ -293,7 +332,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => const ProfileEditScreen(),
+                  builder: (context) => const EditPerfilScreen(),
                 ),
               );
             },
@@ -333,7 +372,26 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     );
   }
 
+  // Nuevo: mostrar diálogo de error al usuario con contenido legible
+  Future<void> _showErrorDialog(String title, String message) async {
+    if (!mounted) return;
+    await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(title),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cerrar'),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _snack(String msg) {
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
   }
 
@@ -547,9 +605,32 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                     if (value == null || value.isEmpty) {
                                       return 'Fecha requerida';
                                     }
-                                    if (value.length < 5) {
+                                    // Formato MM/AA
+                                    final regex = RegExp(
+                                      r'^(0[1-9]|1[0-2])\/\d{2}$',
+                                    );
+                                    if (!regex.hasMatch(value)) {
                                       return 'Formato: MM/AA';
                                     }
+
+                                    final parts = value.split('/');
+                                    final month = int.parse(parts[0]);
+                                    final yearTwoDigits = int.parse(parts[1]);
+                                    final now = DateTime.now();
+
+                                    // Convertir a año 4 dígitos (asumimos 2000 + YY)
+                                    final year = 2000 + yearTwoDigits;
+
+                                    // Si el año es menor o si es el mismo año y el mes es menor -> vencida
+                                    if (year < now.year ||
+                                        (year == now.year &&
+                                            month < now.month)) {
+                                      return 'La tarjeta está vencida';
+                                    }
+
+                                    // Mes no puede ser 00 ya lo cubre la regex pero por seguridad:
+                                    if (month == 0) return 'Mes inválido';
+
                                     return null;
                                   },
                                 ),
@@ -883,23 +964,38 @@ class _CardNumberInputFormatter extends TextInputFormatter {
   }
 }
 
-// Formateador para fecha de vencimiento (MM/AA)
+// Formateador para fecha de vencimiento (MM/AA) — mejora robusta
 class _ExpiryDateInputFormatter extends TextInputFormatter {
   @override
   TextEditingValue formatEditUpdate(
     TextEditingValue oldValue,
     TextEditingValue newValue,
   ) {
-    final text = newValue.text;
+    // Eliminamos todo lo que no sea dígito
+    final digitsOnly = newValue.text.replaceAll(RegExp(r'[^0-9]'), '');
 
-    if (text.length == 2 && oldValue.text.length == 1) {
-      return TextEditingValue(
-        text: '$text/',
-        selection: TextSelection.collapsed(offset: 3),
+    String formatted;
+    if (digitsOnly.length <= 2) {
+      // si <= 2, mostramos tal cual (mes incompleto o completo)
+      formatted = digitsOnly;
+    } else {
+      // si > 2, ponemos MM/YY (hasta 4 dígitos)
+      final month = digitsOnly.substring(0, 2);
+      final yearPart = digitsOnly.substring(
+        2,
+        digitsOnly.length > 4 ? 4 : digitsOnly.length,
       );
+      formatted = '$month/$yearPart';
     }
 
-    return newValue;
+    // Limitar a MM/YY (5 caracteres incluyendo '/')
+    if (formatted.length > 5) formatted = formatted.substring(0, 5);
+
+    // Posicionar el cursor al final (comportamiento simple y estable)
+    return TextEditingValue(
+      text: formatted,
+      selection: TextSelection.collapsed(offset: formatted.length),
+    );
   }
 }
 
